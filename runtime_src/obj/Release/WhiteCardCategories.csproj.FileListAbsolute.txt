@@ -1,0 +1,10 @@
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\bin\Release\JTYWhiteCardCategories.deps.json
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\bin\Release\JTYWhiteCardCategories.dll
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\WhiteCardCategories.csproj.AssemblyReference.cache
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\WhiteCardCategories.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\WhiteCardCategories.AssemblyInfoInputs.cache
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\WhiteCardCategories.AssemblyInfo.cs
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\WhiteCardCategories.csproj.CoreCompileInputs.cache
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\JTYWhiteCardCategories.dll
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\refint\JTYWhiteCardCategories.dll
+C:\Users\txgcs\WorkBuddy\zjb\mod\WhiteCardCategories\runtime_src\obj\Release\ref\JTYWhiteCardCategories.dll
