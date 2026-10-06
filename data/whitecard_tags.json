@@ -1,0 +1,1624 @@
+{
+ "groupOrder": [
+  "攻击",
+  "生产",
+  "职能",
+  "系列",
+  "属性"
+ ],
+ "groups": {
+  "攻击": [
+   "一次性",
+   "射击",
+   "近战",
+   "投抛",
+   "穿透",
+   "猫尾",
+   "发射",
+   "弹幕",
+   "滚动攻击",
+   "后向弹道",
+   "滚动弹道"
+  ],
+  "生产": [
+   "产阳光",
+   "产资源",
+   "吸金"
+  ],
+  "职能": [
+   "坚果",
+   "花盆",
+   "反击",
+   "火炬",
+   "地雷",
+   "磁力",
+   "魅惑",
+   "地刺",
+   "保护伞",
+   "吹飞",
+   "冰冻",
+   "窝瓜",
+   "成长",
+   "缠绕",
+   "大嘴花",
+   "墓吞",
+   "治愈",
+   "莲叶",
+   "击退",
+   "胆小"
+  ],
+  "系列": [
+   "豌豆",
+   "咖啡豆",
+   "辣椒",
+   "大蒜",
+   "寒冰",
+   "南瓜壳",
+   "杨桃",
+   "僵尸",
+   "向日葵",
+   "灯具",
+   "玉米",
+   "樱桃",
+   "魔法",
+   "土豆雷",
+   "三叶草",
+   "喷菇",
+   "树桩",
+   "毁灭",
+   "全息",
+   "仙人掌",
+   "忧郁",
+   "促销",
+   "高坚果",
+   "小喷菇",
+   "裂荚",
+   "西瓜",
+   "海兵菇",
+   "模仿者",
+   "机器",
+   "花瓶",
+   "不可穿透"
+  ],
+  "属性": [
+   "夜行",
+   "火",
+   "冰",
+   "水陆",
+   "水生",
+   "仅底座"
+  ]
+ },
+ "plants": {
+  "PlantSunflowerPea": {
+   "name": "豌豆向日葵",
+   "tags": [
+    "射击",
+    "产阳光",
+    "豌豆",
+    "向日葵"
+   ]
+  },
+  "PlantFirenut": {
+   "name": "火炬坚果",
+   "tags": [
+    "近战",
+    "反击",
+    "火炬",
+    "坚果",
+    "火"
+   ]
+  },
+  "PlantSunBomb": {
+   "name": "阳光炸弹",
+   "tags": [
+    "一次性",
+    "产阳光"
+   ]
+  },
+  "PlantSunMine": {
+   "name": "阳光土豆雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "地雷",
+    "产阳光",
+    "土豆雷"
+   ]
+  },
+  "PlantReCactus": {
+   "name": "双发仙人掌",
+   "tags": [
+    "射击",
+    "穿透",
+    "仙人掌"
+   ]
+  },
+  "PlantSunShroom": {
+   "name": "阳光向日葵",
+   "tags": [
+    "成长",
+    "产阳光",
+    "向日葵"
+   ]
+  },
+  "PlantCactusBlover": {
+   "name": "仙人三叶草",
+   "tags": [
+    "吹飞",
+    "弹幕",
+    "三叶草"
+   ]
+  },
+  "PlantMagnetnut": {
+   "name": "磁力坚果",
+   "tags": [
+    "磁力",
+    "坚果"
+   ]
+  },
+  "PlantPuffPot": {
+   "name": "小盆菇",
+   "tags": [
+    "射击",
+    "花盆",
+    "夜行",
+    "小喷菇"
+   ]
+  },
+  "PlantPeaPot": {
+   "name": "豌豆花盆",
+   "tags": [
+    "射击",
+    "花盆",
+    "豌豆"
+   ]
+  },
+  "PlantCatPot": {
+   "name": "猫砂盆",
+   "tags": [
+    "射击",
+    "猫尾",
+    "穿透",
+    "花盆"
+   ]
+  },
+  "PlantCorntrop": {
+   "name": "玉米地刺",
+   "tags": [
+    "近战",
+    "玉米",
+    "地刺"
+   ]
+  },
+  "PlantSunBean": {
+   "name": "阳光豆",
+   "tags": [
+    "成长",
+    "产阳光",
+    "咖啡豆"
+   ]
+  },
+  "PlantHypnoGarlic": {
+   "name": "魅惑大蒜",
+   "tags": [
+    "大蒜",
+    "魅惑"
+   ]
+  },
+  "PlantGraveMine": {
+   "name": "墓碑埋雷者",
+   "tags": [
+    "墓吞"
+   ]
+  },
+  "PlantScaredySunShroom": {
+   "name": "阳光胆小菇",
+   "tags": [
+    "射击",
+    "成长",
+    "胆小",
+    "产阳光",
+    "夜行"
+   ]
+  },
+  "PlantIcenut": {
+   "name": "冰冻坚果",
+   "tags": [
+    "射击",
+    "反击",
+    "冰冻",
+    "坚果",
+    "冰"
+   ]
+  },
+  "PlantSnowShroom": {
+   "name": "雪花寒冰菇",
+   "tags": [
+    "冰冻",
+    "寒冰",
+    "冰",
+    "夜行",
+    "弹幕"
+   ]
+  },
+  "PlantWinterMelonShroom": {
+   "name": "冰瓜大喷菇",
+   "tags": [
+    "射击",
+    "近战",
+    "喷菇",
+    "冰",
+    "夜行"
+   ]
+  },
+  "PlantGargantuarShroom": {
+   "name": "红眼菇",
+   "tags": [
+    "夜行",
+    "魅惑"
+   ]
+  },
+  "PlantMagnetMine": {
+   "name": "磁力土豆雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "磁力",
+    "地雷",
+    "土豆雷"
+   ]
+  },
+  "PlantPeaLilyPad": {
+   "name": "豌豆睡莲",
+   "tags": [
+    "射击",
+    "花盆",
+    "豌豆",
+    "莲叶",
+    "水生"
+   ]
+  },
+  "PlantJalaSunShroom": {
+   "name": "辣椒阳光菇",
+   "tags": [
+    "成长",
+    "产阳光",
+    "辣椒",
+    "火",
+    "夜行"
+   ]
+  },
+  "PlantFireSnowPea": {
+   "name": "冰火裂荚射手",
+   "tags": [
+    "射击",
+    "发射",
+    "裂荚",
+    "冰",
+    "火"
+   ]
+  },
+  "PlantGloompult": {
+   "name": "忧郁菇投手",
+   "tags": [
+    "投抛",
+    "近战",
+    "忧郁",
+    "夜行"
+   ]
+  },
+  "PlantIceSunShroom": {
+   "name": "寒光菇",
+   "tags": [
+    "产阳光",
+    "冰冻",
+    "冰",
+    "夜行"
+   ]
+  },
+  "PlantTabooDoomShroom": {
+   "name": "禁忌毁灭菇",
+   "tags": [
+    "一次性",
+    "毁灭"
+   ]
+  },
+  "PlantPeaCat": {
+   "name": "豌豆香蒲",
+   "tags": [
+    "猫尾",
+    "豌豆",
+    "水陆"
+   ]
+  },
+  "PlantSnowwood": {
+   "name": "冰炬树桩",
+   "tags": [
+    "火炬",
+    "树桩",
+    "冰",
+    "火"
+   ]
+  },
+  "PlantSeaNut": {
+   "name": "海坚果",
+   "tags": [
+    "射击",
+    "坚果",
+    "水生"
+   ]
+  },
+  "PlantMelonpultSpike": {
+   "name": "地刺西瓜投手",
+   "tags": [
+    "投抛",
+    "西瓜",
+    "地刺"
+   ]
+  },
+  "PlantTanglekelpH": {
+   "name": "魅惑海草",
+   "tags": [
+    "近战",
+    "缠绕",
+    "魅惑",
+    "水生"
+   ]
+  },
+  "PlantJalaNut": {
+   "name": "火爆坚果",
+   "tags": [
+    "反击",
+    "坚果",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantJalaCherryBomb": {
+   "name": "樱桃辣椒",
+   "tags": [
+    "一次性",
+    "樱桃",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantPlanternSix": {
+   "name": "6号路灯花",
+   "tags": [
+    "灯具",
+    "冰"
+   ]
+  },
+  "PlantSunPad": {
+   "name": "骄阳睡莲",
+   "tags": [
+    "花盆",
+    "反击",
+    "产阳光",
+    "莲叶",
+    "火",
+    "水生"
+   ]
+  },
+  "PlantPeaWell": {
+   "name": "豌豆许愿池",
+   "tags": [
+    "豌豆",
+    "水陆",
+    "射击"
+   ]
+  },
+  "PlantPumpkinFire": {
+   "name": "火焰南瓜壳",
+   "tags": [
+    "反击",
+    "火炬",
+    "南瓜壳",
+    "坚果",
+    "火"
+   ]
+  },
+  "PlantChomperBlow": {
+   "name": "三叶大嘴花",
+   "tags": [
+    "近战",
+    "大嘴花",
+    "吹飞"
+   ]
+  },
+  "PlantDoomTanglekelp": {
+   "name": "毁灭海草",
+   "tags": [
+    "近战",
+    "一次性",
+    "缠绕",
+    "毁灭",
+    "水生"
+   ]
+  },
+  "PlantIceSeaShroom": {
+   "name": "海冰菇",
+   "tags": [
+    "射击",
+    "冰",
+    "夜行",
+    "水生",
+    "海兵菇"
+   ]
+  },
+  "PlantMagnetShroomIce": {
+   "name": "寒冰磁力菇",
+   "tags": [
+    "射击",
+    "磁力",
+    "寒冰",
+    "冰",
+    "夜行"
+   ]
+  },
+  "PlantCornpultM": {
+   "name": "磁力玉米投手",
+   "tags": [
+    "投抛",
+    "磁力",
+    "玉米"
+   ]
+  },
+  "PlantWallnutABC_A": {
+   "name": "套盒坚果",
+   "tags": [
+    "坚果"
+   ]
+  },
+  "PlantSnowBlover": {
+   "name": "寒冰三叶草",
+   "tags": [
+    "吹飞",
+    "弹幕",
+    "三叶草",
+    "寒冰",
+    "冰"
+   ]
+  },
+  "PlantPumpkinSun": {
+   "name": "阳光南瓜掌",
+   "tags": [
+    "射击",
+    "投抛",
+    "穿透",
+    "反击",
+    "产阳光",
+    "坚果"
+   ]
+  },
+  "PlantKabbageTail": {
+   "name": "玉米卷香蒲",
+   "tags": [
+    "猫尾",
+    "玉米",
+    "水陆"
+   ]
+  },
+  "PlantSunPot": {
+   "name": "阳光花盆",
+   "tags": [
+    "花盆",
+    "产阳光"
+   ]
+  },
+  "PlantPlanternTanglekelp": {
+   "name": "缠绕灯草",
+   "tags": [
+    "近战",
+    "缠绕",
+    "灯具",
+    "水陆"
+   ]
+  },
+  "PlantSeaStar": {
+   "name": "海洋星",
+   "tags": [
+    "射击",
+    "冰",
+    "水陆",
+    "杨桃"
+   ]
+  },
+  "PlantIceSquash": {
+   "name": "冰菇窝瓜",
+   "tags": [
+    "近战",
+    "窝瓜",
+    "冰冻",
+    "冰"
+   ]
+  },
+  "PlantCatFlower": {
+   "name": "小猫向日葵",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "产阳光",
+    "向日葵"
+   ]
+  },
+  "PlantCatPumpkin": {
+   "name": "猫窝",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "坚果",
+    "水陆",
+    "南瓜壳"
+   ]
+  },
+  "PlantCoffeeleaf": {
+   "name": "咖啡伞",
+   "tags": [
+    "保护伞",
+    "咖啡豆"
+   ]
+  },
+  "PlantCabbageCob": {
+   "name": "玉米卷迫击炮",
+   "tags": [
+    "投抛",
+    "玉米"
+   ]
+  },
+  "PlantMelonnut": {
+   "name": "西瓜坚果",
+   "tags": [
+    "投抛",
+    "坚果",
+    "西瓜"
+   ]
+  },
+  "PlantGarlicChomper": {
+   "name": "大蒜大嘴花",
+   "tags": [
+    "近战",
+    "大嘴花",
+    "大蒜"
+   ]
+  },
+  "PlantNutleaf": {
+   "name": "坚果保护伞",
+   "tags": [
+    "保护伞",
+    "坚果"
+   ]
+  },
+  "PlantPotatoCobCannon": {
+   "name": "土豆加农炮",
+   "tags": [
+    "发射"
+   ]
+  },
+  "PlantPotSpike": {
+   "name": "地刺花盆",
+   "tags": [
+    "近战",
+    "花盆",
+    "地刺"
+   ]
+  },
+  "PlantSunpult": {
+   "name": "阳光菇投手",
+   "tags": [
+    "投抛",
+    "成长",
+    "产阳光",
+    "夜行"
+   ]
+  },
+  "PlantSunPeashooter": {
+   "name": "骄阳豌豆射手",
+   "tags": [
+    "射击",
+    "穿透",
+    "产阳光",
+    "豌豆",
+    "火"
+   ]
+  },
+  "PlantJalaTorch": {
+   "name": "火炬辣椒",
+   "tags": [
+    "一次性",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantThreePeaterG": {
+   "name": "大蒜三线射手",
+   "tags": [
+    "射击",
+    "大蒜"
+   ]
+  },
+  "PlantCaltropSnow": {
+   "name": "寒冰地刺",
+   "tags": [
+    "近战",
+    "冰冻",
+    "寒冰",
+    "地刺",
+    "冰"
+   ]
+  },
+  "PlantIceCactus": {
+   "name": "寒冰仙人掌",
+   "tags": [
+    "射击",
+    "穿透",
+    "寒冰",
+    "仙人掌",
+    "冰"
+   ]
+  },
+  "PlantPotGarlic": {
+   "name": "大蒜花盆",
+   "tags": [
+    "花盆",
+    "大蒜"
+   ]
+  },
+  "PlantSpringFumeShroom": {
+   "name": "QQ弹弹大喷菇",
+   "tags": [
+    "保护伞",
+    "喷菇",
+    "夜行",
+    "击退"
+   ]
+  },
+  "PlantPumpkinCannon": {
+   "name": "南瓜加农炮",
+   "tags": [
+    "发射",
+    "坚果",
+    "南瓜壳"
+   ]
+  },
+  "PlantStarleaf": {
+   "name": "杨桃保护伞",
+   "tags": [
+    "保护伞",
+    "杨桃",
+    "坚果"
+   ]
+  },
+  "PlantJalapult": {
+   "name": "川菜投手",
+   "tags": [
+    "投抛",
+    "火"
+   ]
+  },
+  "PlantSquashKing": {
+   "name": "窝瓜王",
+   "tags": [
+    "近战",
+    "窝瓜"
+   ]
+  },
+  "PlantDoomShroomF": {
+   "name": "烈焰毁灭菇",
+   "tags": [
+    "一次性",
+    "毁灭",
+    "火",
+    "夜行"
+   ]
+  },
+  "PlantMariGoldMagnet": {
+   "name": "金盏吸金磁",
+   "tags": [
+    "射击",
+    "吸金",
+    "产资源"
+   ]
+  },
+  "PlantChomperPot": {
+   "name": "大嘴花盆",
+   "tags": [
+    "近战",
+    "大嘴花"
+   ]
+  },
+  "PlantWallnutSquash": {
+   "name": "窝瓜坚果",
+   "tags": [
+    "近战",
+    "窝瓜",
+    "坚果"
+   ]
+  },
+  "PlantGloomSquash": {
+   "name": "窝瓜忧郁菇",
+   "tags": [
+    "近战",
+    "窝瓜",
+    "忧郁",
+    "夜行"
+   ]
+  },
+  "PlantWinterMelonX": {
+   "name": "极寒冰瓜投手",
+   "tags": [
+    "投抛",
+    "寒冰",
+    "冰"
+   ]
+  },
+  "PlantTabooBean": {
+   "name": "禁忌咖啡豆",
+   "tags": [
+    "一次性",
+    "咖啡豆"
+   ]
+  },
+  "PlantPiratePeater": {
+   "name": "海盗三线射手",
+   "tags": [
+    "射击",
+    "击退"
+   ]
+  },
+  "PlantWallnutHole": {
+   "name": "坑洞坚果",
+   "tags": [
+    "坚果"
+   ]
+  },
+  "PlantRichwood": {
+   "name": "宝藏树桩",
+   "tags": [
+    "射击",
+    "树桩",
+    "火",
+    "火炬"
+   ]
+  },
+  "PlantImitaterW": {
+   "name": "坚果模仿者",
+   "tags": [
+    "一次性",
+    "模仿者",
+    "坚果"
+   ]
+  },
+  "PlantPowShroom": {
+   "name": "辣椒大炮菇",
+   "tags": [
+    "射击",
+    "发射",
+    "近战",
+    "火",
+    "夜行"
+   ]
+  },
+  "PlantUmbrellaTorch": {
+   "name": "火炬保护伞",
+   "tags": [
+    "保护伞",
+    "反击",
+    "火炬",
+    "火"
+   ]
+  },
+  "PlantPumpkinPea": {
+   "name": "豆荚壳",
+   "tags": [
+    "射击",
+    "南瓜壳"
+   ]
+  },
+  "PlantCherryPea": {
+   "name": "豌豆炸弹",
+   "tags": [
+    "一次性",
+    "豌豆"
+   ]
+  },
+  "PlantFeverStar": {
+   "name": "狂热星",
+   "tags": [
+    "射击",
+    "火",
+    "杨桃"
+   ]
+  },
+  "PlantPanGoldBean": {
+   "name": "淘金豆",
+   "tags": [
+    "一次性",
+    "咖啡豆",
+    "产资源"
+   ]
+  },
+  "PlantFeverBlover": {
+   "name": "狂热三叶草",
+   "tags": [
+    "射击",
+    "吸金",
+    "吹飞",
+    "产资源",
+    "弹幕",
+    "三叶草",
+    "火"
+   ]
+  },
+  "PlantNutFlower": {
+   "name": "坚果向日葵",
+   "tags": [
+    "坚果",
+    "向日葵",
+    "产资源"
+   ]
+  },
+  "PlantNutpult": {
+   "name": "坚果投手",
+   "tags": [
+    "投抛",
+    "穿透",
+    "坚果"
+   ]
+  },
+  "PlantSquidGloomShroom": {
+   "name": "章鱼忧郁菇",
+   "tags": [
+    "近战",
+    "忧郁",
+    "夜行",
+    "水生"
+   ]
+  },
+  "PlantStressShroom": {
+   "name": "增压大喷菇",
+   "tags": [
+    "近战",
+    "喷菇",
+    "夜行"
+   ]
+  },
+  "PlantBYWZ": {
+   "name": "备用物资",
+   "tags": [
+    "一次性"
+   ]
+  },
+  "PlantCoffeebeanSale": {
+   "name": "促销豆",
+   "tags": [
+    "一次性",
+    "产阳光",
+    "促销",
+    "咖啡豆"
+   ]
+  },
+  "PlantUpgradebean": {
+   "name": "升值豆",
+   "tags": [
+    "一次性",
+    "产阳光",
+    "咖啡豆"
+   ]
+  },
+  "PlantPeashooterZ": {
+   "name": "僵尸豌豆射手",
+   "tags": [
+    "射击",
+    "豌豆",
+    "僵尸"
+   ]
+  },
+  "PlantSunFlowerZ": {
+   "name": "僵尸向日葵",
+   "tags": [
+    "产阳光",
+    "向日葵",
+    "僵尸"
+   ]
+  },
+  "PlantHammerLight": {
+   "name": "荧光木槌",
+   "tags": [
+    "一次性"
+   ]
+  },
+  "PlantPumpLantern": {
+   "name": "南瓜灯",
+   "tags": [
+    "灯具"
+   ]
+  },
+  "PlantGhostbuster": {
+   "name": "幽灵吞噬者",
+   "tags": [
+    "墓吞"
+   ]
+  },
+  "PlantWallnutZ": {
+   "name": "僵尸坚果",
+   "tags": [
+    "坚果",
+    "僵尸"
+   ]
+  },
+  "PlantSunFlagbean": {
+   "name": "旗帜阳光豆",
+   "tags": [
+    "一次性",
+    "产阳光",
+    "咖啡豆"
+   ]
+  },
+  "PlantBungiSquash": {
+   "name": "蹦极窝瓜",
+   "tags": [
+    "近战",
+    "窝瓜",
+    "僵尸"
+   ]
+  },
+  "PlantChomperZ": {
+   "name": "僵尸大嘴花",
+   "tags": [
+    "近战",
+    "大嘴花",
+    "僵尸"
+   ]
+  },
+  "PlantThreePeaterZ": {
+   "name": "僵尸三线射手",
+   "tags": [
+    "射击",
+    "僵尸",
+    "豌豆"
+   ]
+  },
+  "PlantTorchwoodZ": {
+   "name": "僵尸火炬树桩",
+   "tags": [
+    "火炬",
+    "僵尸",
+    "树桩",
+    "火"
+   ]
+  },
+  "PlantCaltropZ": {
+   "name": "僵尸地刺",
+   "tags": [
+    "近战",
+    "僵尸",
+    "地刺"
+   ]
+  },
+  "PlantHypnoBean": {
+   "name": "魅惑咖啡豆",
+   "tags": [
+    "一次性",
+    "产阳光",
+    "咖啡豆",
+    "魅惑"
+   ]
+  },
+  "PlantHypnoBlover": {
+   "name": "魅惑三叶草",
+   "tags": [
+    "吹飞",
+    "三叶草",
+    "魅惑"
+   ]
+  },
+  "PlantCatTailZ": {
+   "name": "僵尸猫尾草",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "僵尸",
+    "水陆"
+   ]
+  },
+  "PlantLampShroom": {
+   "name": "灵感菇",
+   "tags": [
+    "一次性",
+    "产资源"
+   ]
+  },
+  "PlantGarlicBird": {
+   "name": "蒜鸟",
+   "tags": [
+    "大蒜"
+   ]
+  },
+  "PlantCoffeeBlover": {
+   "name": "咖啡三叶草",
+   "tags": [
+    "吹飞",
+    "三叶草"
+   ]
+  },
+  "PlantSunFlowerQX": {
+   "name": "全息向日葵",
+   "tags": [
+    "产阳光",
+    "向日葵",
+    "全息"
+   ]
+  },
+  "PlantWallnutQX": {
+   "name": "全息激光坚果",
+   "tags": [
+    "坚果",
+    "全息"
+   ]
+  },
+  "PlantSunTransfer": {
+   "name": "阳光中转站",
+   "tags": [
+    "产阳光"
+   ]
+  },
+  "PlantEMPCherry": {
+   "name": "脉冲小樱桃",
+   "tags": [
+    "一次性",
+    "樱桃"
+   ]
+  },
+  "PlantCactusQX": {
+   "name": "全息仙人掌",
+   "tags": [
+    "射击",
+    "穿透",
+    "仙人掌",
+    "全息"
+   ]
+  },
+  "PlantPlanternTime": {
+   "name": "时光路灯花",
+   "tags": [
+    "灯具"
+   ]
+  },
+  "PlantDiceBomb": {
+   "name": "科技骰子炸弹",
+   "tags": [
+    "一次性"
+   ]
+  },
+  "PlantStarRobot": {
+   "name": "机械杨桃",
+   "tags": [
+    "射击",
+    "穿透",
+    "一次性",
+    "杨桃"
+   ]
+  },
+  "PlantSunShroomCharge": {
+   "name": "充能阳光菇",
+   "tags": [
+    "产阳光",
+    "夜行"
+   ]
+  },
+  "PlantPumpkinRobot": {
+   "name": "机械防爆南瓜",
+   "tags": [
+    "一次性",
+    "南瓜壳"
+   ]
+  },
+  "PlantCornpultGene": {
+   "name": "基因玉米投手",
+   "tags": [
+    "投抛",
+    "玉米"
+   ]
+  },
+  "PlantPotatoMineQX": {
+   "name": "全息土豆雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "地雷",
+    "土豆雷",
+    "全息"
+   ]
+  },
+  "PlantEnergyBean": {
+   "name": "蓄能咖啡豆",
+   "tags": [
+    "咖啡豆"
+   ]
+  },
+  "PlantCatTailTP": {
+   "name": "传送猫尾草",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "水陆"
+   ]
+  },
+  "PlantMagicBean": {
+   "name": "魔术咖啡豆",
+   "tags": [
+    "一次性",
+    "咖啡豆"
+   ]
+  },
+  "PlantMagnetShroomDM": {
+   "name": "毁灭磁力菇",
+   "tags": [
+    "射击",
+    "发射",
+    "一次性",
+    "磁力",
+    "毁灭",
+    "夜行"
+   ]
+  },
+  "PlantMagnetPumpkin": {
+   "name": "磁力南瓜壳",
+   "tags": [
+    "磁力",
+    "南瓜壳",
+    "坚果"
+   ]
+  },
+  "PlantEMPlantern": {
+   "name": "电磁路灯花",
+   "tags": [
+    "灯具"
+   ]
+  },
+  "PlantPeaShooterMagic": {
+   "name": "魔法豌豆射手",
+   "tags": [
+    "射击",
+    "豌豆",
+    "魔法"
+   ]
+  },
+  "PlantSunFlowerMagic": {
+   "name": "魔法向日葵",
+   "tags": [
+    "产阳光",
+    "向日葵",
+    "魔法"
+   ]
+  },
+  "PlantGuardNut": {
+   "name": "坚果护卫",
+   "tags": [
+    "近战",
+    "坚果"
+   ]
+  },
+  "PlantPuffShroomElf": {
+   "name": "精灵小喷菇",
+   "tags": [
+    "射击",
+    "小喷菇",
+    "喷菇",
+    "魔法",
+    "夜行"
+   ]
+  },
+  "PlantHypnoShroomLight": {
+   "name": "荧光魅惑菇",
+   "tags": [
+    "魅惑",
+    "灯具",
+    "魔法",
+    "夜行"
+   ]
+  },
+  "PlantPotVampire": {
+   "name": "吸血花盆",
+   "tags": [
+    "花盆",
+    "魔法"
+   ]
+  },
+  "PlantWildMine": {
+   "name": "狂野土豆雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "地雷",
+    "土豆雷"
+   ]
+  },
+  "PlantMagicRoot": {
+   "name": "魔法树根",
+   "tags": [
+    "魔法"
+   ]
+  },
+  "PlantLilyPot": {
+   "name": "花盆睡莲",
+   "tags": [
+    "花盆",
+    "水陆"
+   ]
+  },
+  "PlantThreeHybirdPeater": {
+   "name": "杂交三线射手",
+   "tags": [
+    "射击",
+    "冰"
+   ]
+  },
+  "PlantSnowPeaCat": {
+   "name": "寒冰香蒲",
+   "tags": [
+    "猫尾",
+    "寒冰",
+    "冰",
+    "水陆"
+   ]
+  },
+  "PlantSnowCornpult": {
+   "name": "寒冰投射手",
+   "tags": [
+    "投抛",
+    "寒冰",
+    "冰"
+   ]
+  },
+  "PlantThreeCornpult": {
+   "name": "三线玉米投手",
+   "tags": [
+    "投抛",
+    "玉米"
+   ]
+  },
+  "PlantPotatoStar": {
+   "name": "土杨桃",
+   "tags": [
+    "射击",
+    "杨桃"
+   ]
+  },
+  "PlantTorchwoodStar": {
+   "name": "杨桃树桩",
+   "tags": [
+    "火炬",
+    "杨桃",
+    "树桩",
+    "火"
+   ]
+  },
+  "PlantGatlingCabbage": {
+   "name": "机枪卷心菜投手",
+   "tags": [
+    "投抛",
+    "射击",
+    "豌豆"
+   ]
+  },
+  "PlantFumeShroomC": {
+   "name": "樱桃大喷菇",
+   "tags": [
+    "近战",
+    "樱桃",
+    "喷菇",
+    "夜行"
+   ]
+  },
+  "PlantStarPeater": {
+   "name": "杨桃三线射手",
+   "tags": [
+    "射击",
+    "杨桃"
+   ]
+  },
+  "PlantJalaJoker": {
+   "name": "黄油Joker",
+   "tags": [
+    "一次性",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantGarlicBomb": {
+   "name": "大蒜炸弹",
+   "tags": [
+    "一次性",
+    "大蒜"
+   ]
+  },
+  "PlantJalapenopepe": {
+   "name": "泡椒炸弹",
+   "tags": [
+    "一次性",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantGarlicJalapeno": {
+   "name": "大蒜辣椒",
+   "tags": [
+    "一次性",
+    "大蒜",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantStarCaltrop": {
+   "name": "地刺杨桃",
+   "tags": [
+    "射击",
+    "穿透",
+    "近战",
+    "杨桃",
+    "地刺"
+   ]
+  },
+  "PlantGWC": {
+   "name": "狗尾草",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "水陆"
+   ]
+  },
+  "PlantMedicPlantern": {
+   "name": "治愈路灯花",
+   "tags": [
+    "灯具",
+    "治愈"
+   ]
+  },
+  "PlantMedicPot": {
+   "name": "治愈花盆",
+   "tags": [
+    "花盆",
+    "治愈"
+   ]
+  },
+  "PlantSplitPeaCat": {
+   "name": "裂荚香蒲",
+   "tags": [
+    "猫尾",
+    "裂荚",
+    "水陆"
+   ]
+  },
+  "PlantJalaGhost": {
+   "name": "魔鬼辣椒",
+   "tags": [
+    "一次性",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantPrimalNut": {
+   "name": "原始坚果",
+   "tags": [
+    "坚果",
+    "地刺"
+   ]
+  },
+  "PlantGravebomber": {
+   "name": "墓碑爆破者",
+   "tags": [
+    "一次性",
+    "墓吞"
+   ]
+  },
+  "PlantGarlicTallnut": {
+   "name": "大蒜高坚果",
+   "tags": [
+    "一次性",
+    "反击",
+    "大蒜",
+    "坚果",
+    "高坚果"
+   ]
+  },
+  "PlantTallnutUmbrella": {
+   "name": "叶子高坚果",
+   "tags": [
+    "保护伞",
+    "坚果",
+    "高坚果"
+   ]
+  },
+  "PlantPumpkinBig": {
+   "name": "巨型南瓜壳",
+   "tags": [
+    "南瓜壳",
+    "坚果"
+   ]
+  },
+  "PlantHurtTallnut": {
+   "name": "受伤的高坚果",
+   "tags": [
+    "坚果",
+    "高坚果",
+    "治愈"
+   ]
+  },
+  "PlantMagnetBomb": {
+   "name": "磁力樱桃炸弹",
+   "tags": [
+    "一次性",
+    "磁力",
+    "樱桃"
+   ]
+  },
+  "PlantCherryMine": {
+   "name": "樱桃土豆雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "地雷",
+    "樱桃",
+    "土豆雷"
+   ]
+  },
+  "PlantFumeSeaShroom": {
+   "name": "大海菇",
+   "tags": [
+    "近战",
+    "夜行",
+    "水生"
+   ]
+  },
+  "PlantWallnutSale": {
+   "name": "促销坚果",
+   "tags": [
+    "坚果",
+    "促销"
+   ]
+  },
+  "PlantPotSale": {
+   "name": "促销花盆",
+   "tags": [
+    "花盆",
+    "产阳光",
+    "促销"
+   ]
+  },
+  "PlantCabbagepultInside": {
+   "name": "内卷投手",
+   "tags": [
+    "投抛"
+   ]
+  },
+  "PlantIceBomb": {
+   "name": "寒冰炸弹",
+   "tags": [
+    "一次性",
+    "冰冻",
+    "寒冰",
+    "冰"
+   ]
+  },
+  "PlantPotatoSquash": {
+   "name": "土豆窝瓜雷",
+   "tags": [
+    "近战",
+    "地雷",
+    "窝瓜"
+   ]
+  },
+  "PlantCherryBean": {
+   "name": "樱桃豆",
+   "tags": [
+    "一次性",
+    "樱桃",
+    "咖啡豆"
+   ]
+  },
+  "PlantSWC": {
+   "name": "鼠尾草",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "水陆"
+   ]
+  },
+  "PlantHWC": {
+   "name": "狐尾草",
+   "tags": [
+    "猫尾",
+    "水陆"
+   ]
+  },
+  "PlantHypnoShroomSun": {
+   "name": "阳光魅惑菇",
+   "tags": [
+    "魅惑",
+    "夜行"
+   ]
+  },
+  "PlantPumpkinPult": {
+   "name": "南瓜投手",
+   "tags": [
+    "投抛",
+    "南瓜壳"
+   ]
+  },
+  "PlantPumpkinNut": {
+   "name": "坚果南瓜壳",
+   "tags": [
+    "南瓜壳",
+    "坚果"
+   ]
+  },
+  "PlantPotatoMineR": {
+   "name": "火爆地雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "地雷",
+    "辣椒",
+    "火"
+   ]
+  },
+  "PlantKelpMine": {
+   "name": "缠绕水雷",
+   "tags": [
+    "近战",
+    "一次性",
+    "地雷",
+    "缠绕",
+    "水生"
+   ]
+  },
+  "PlantMagnetshroomS": {
+   "name": "杨桃磁力菇",
+   "tags": [
+    "射击",
+    "磁力",
+    "杨桃",
+    "冰",
+    "夜行"
+   ]
+  },
+  "PlantHypnoPot": {
+   "name": "魅惑花盆",
+   "tags": [
+    "花盆",
+    "魅惑"
+   ]
+  },
+  "PlantSealeaf": {
+   "name": "海叶伞",
+   "tags": [
+    "射击",
+    "保护伞",
+    "夜行",
+    "水生",
+    "海兵菇"
+   ]
+  },
+  "PlantGarlicWood": {
+   "name": "大蒜火炬树桩",
+   "tags": [
+    "火炬",
+    "大蒜",
+    "树桩",
+    "火"
+   ]
+  },
+  "PlantPresentBox": {
+   "name": "抽奖盒子",
+   "tags": [
+    "一次性",
+    "辣椒",
+    "模仿者"
+   ]
+  }
+ }
+}

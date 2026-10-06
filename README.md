@@ -122,19 +122,45 @@ IReadOnlyList<CharacterComponentDefinition> defs = cs.GetFlattenedDefinitions();
 | 魅惑 | 表格判据是"名称含魅惑"或脚本调用 `zombie.Hypnoses()`（脚本逻辑无法在选卡期读到）。名称关键词里没有独立规则，表外卡可能漏标。 |
 | 海兵菇 / 治愈 / 击退 / 弹幕 | 表格标注为**人工指定**（源码无可判定信号），表外卡无法自动识别。 |
 
+## 仓库结构
+
+```
+WhiteCardCategories/
+├── mod.json                     ← Mod 清单
+├── build_mod.py                 ← 编译 + 打包 + 装机
+├── runtime_src/                 ← C# 源码
+│   ├── WhiteCardCategoriesEntry.cs    主入口（UI + 注入 + 二级菜单）
+│   ├── WhiteCardAutoTagger.cs         运行时自动识别标签
+│   └── WhiteCardCategoriesTable.cs    ★ 由表格生成的烘焙表（勿手改）
+├── data/
+│   ├── 白卡植物标签表.xlsx       ★ 标签体系的**原始数据源**
+│   └── whitecard_tags.json      由表格导出的中间数据（可重建）
+├── tools/
+│   ├── extract_whitecard_tags.py     xlsx → json（含校验）
+│   ├── gen_whitecard_table.py        json → WhiteCardCategoriesTable.cs
+│   └── verify_table_roundtrip.py     ★ 回环校验：C# 表 vs xlsx 逐项比对
+├── Runtime/ModAssembly.dll      ← 打包用（编译产物改名而来）
+└── dist/WhiteCardCategories.pmod ← 成品
+```
+
 ## 构建与再生成
 
 ```powershell
-# 1) 表格改了 ⇒ 重新导出 + 重生成烘焙表
-python .dsh-backup\extract_whitecard_tags.py      # xlsx -> whitecard_tags.json（含校验）
-python .dsh-backup\gen_whitecard_table.py         # json -> WhiteCardCategoriesTable.cs
-python .dsh-backup\verify_table_roundtrip.py      # 回环校验：C# 表 vs xlsx 逐项比对
+# 1) 改了表格 ⇒ 重新导出 + 重生成烘焙表 + 校验
+python tools\extract_whitecard_tags.py     # xlsx -> data/whitecard_tags.json（当场校验）
+python tools\gen_whitecard_table.py        # json -> runtime_src/WhiteCardCategoriesTable.cs
+python tools\verify_table_roundtrip.py     # 回环校验：C# 表 vs 表格逐项比对
 
 # 2) 编译 + 打包 + 装机
-python mods\WhiteCardCategories\build_mod.py --install
+python build_mod.py --install
 ```
 
-导出脚本会**当场校验**：植物键是否齐全、标签是否全在字典里、分组是否只有那 5 个。
+三个脚本的路径都是**相对脚本自身**的，换机器/换目录都能直接跑，只要保持上面这个目录结构。
+
+* `extract_whitecard_tags.py` 会**当场校验**：植物键是否齐全、标签是否全在字典里、分组是否只有那 5 个。
+* `verify_table_roundtrip.py` 是**必须跑的**：烘焙表是生成的，一旦生成脚本出错（漏行、串行、分隔符处理错），
+  表现只会是"某株植物少了个标签"，肉眼极难发现。它逐项比对大类顺序、每个大类的标签、每株植物的标签，
+  并检查有没有游离标签。退出码 0 才算通过。
 
 ## 落点与切换机制（读源码核实）
 
