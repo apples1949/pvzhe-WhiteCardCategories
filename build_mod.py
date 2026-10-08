@@ -118,7 +118,10 @@ def compile_asm():
                   "-p:GodotRefDir=" + require_ref_dir(),
                   "-p:UseSharedCompilation=false", "-m:1", "-nodeReuse:false",
                   "-v:q", "-nologo"], 600)
-    with open(os.path.join(SRC, "build.log"), "w", encoding="utf-8") as f:
+    # 编译器输出日志也写到工作区 .cache/build_logs/（不再落在 Mod 目录里）
+    _clp = os.path.join(WORKSPACE, ".cache", "build_logs", "whitecardcategories_compile.log")
+    os.makedirs(os.path.dirname(_clp), exist_ok=True)
+    with open(_clp, "w", encoding="utf-8") as f:
         f.write("\n".join(logs))
     log("[compile] RC=%d" % rc)
     return rc == 0
