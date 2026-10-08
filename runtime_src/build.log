@@ -1,5 +1,0 @@
-$ dotnet build -c Release --no-restore -p:GodotRefDir=C:\Users\apples1949\Desktop\植物大战僵尸杂交重制版\data_PlantsVsZombies_windows_x86_64 -p:UseSharedCompilation=false -m:1 -nodeReuse:false -v:q -nologo  -> RC=0
-0 个警告
-    0 个错误
-
-已用时间 00:00:05.54

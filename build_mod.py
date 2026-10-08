@@ -55,7 +55,9 @@ out = []
 def log(s):
     out.append(str(s))
     try:
-        with open(os.path.join(BASE, "_whitecardcategories_build.log"), "w", encoding="utf-8") as f:
+        _lp = os.path.join(WORKSPACE, ".cache", "build_logs", "whitecardcategories_build.log")
+        os.makedirs(os.path.dirname(_lp), exist_ok=True)
+        with open(_lp, "w", encoding="utf-8") as f:
             f.write("\n".join(out))
     except Exception:
         pass
@@ -221,7 +223,9 @@ if __name__ == "__main__":
         log(traceback.format_exc())
         rc = 1
     txt = "\n".join(out)
-    with open(os.path.join(BASE, "_whitecardcategories_build.log"), "w", encoding="utf-8") as f:
+    _lp = os.path.join(WORKSPACE, ".cache", "build_logs", "whitecardcategories_build.log")
+    os.makedirs(os.path.dirname(_lp), exist_ok=True)
+    with open(_lp, "w", encoding="utf-8") as f:
         f.write(txt)
     print(txt)
     sys.exit(rc)
