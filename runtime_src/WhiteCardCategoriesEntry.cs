@@ -43,13 +43,16 @@ using PVZHE.ModEditor.ModSystem;
 /// </summary>
 public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 {
+	// 赞助码注入器（SponsorQrInjector.cs 共享组件）用的包根缓存
+	internal static string SponsorQrRoot = null;
+
 	private const string P = "[WhiteCardCat] ";
 
 	/// <summary>注入到 packetBankData 的标签键前缀（避免与游戏自带键撞车）。</summary>
 	private const string KeyPrefix = "WCC_";
 
 	/// <summary>诊断日志（默认关；排查时置 true 重新构建）。</summary>
-	private static readonly bool EnableLog = false;
+	private static bool EnableLog;   // 由 Initialize 从「Mod 配置」读取（原为编译期常量）
 
 	/// <summary>字号选择项（用户要求：16/18/20/22/24/26）。</summary>
 	private static readonly int[] FontSizeChoices = { 16, 18, 20, 22, 24, 26 };
@@ -59,6 +62,12 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 
 	/// <summary>当前按钮字号（持久化；默认 18）。</summary>
 	private int _fontSize = 18;
+		private const string KFollowFont = "followCategoryFontSize";
+		private static bool _followFont;
+		private const string KDefaultCat = "defaultCategory";
+		private string _defaultCat = "";
+		private bool _defaultApplied;
+		private int _lastFollowFont = -1;
 
 	/// <summary>「白卡分类」按钮在 CardSort 下的位置（与 CardZombie 同列，向下 75px）。</summary>
 	private const float ButtonOffsetLeft = 133f;
@@ -76,8 +85,99 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 
 	// ================================================================ 生命周期
 
-	public void Initialize(XWModRuntimeContext context)
+	
+	// ============================================================ 配置面板接线
+	//
+	// mod.json 里声明了 enableLog（bool，默认 false）。
+	// 这里在 Initialize 读一次 —— 老宿主没有 context.Settings 时吞异常、按 false 处理。
+	// 用 Get<object> 而不是 Get<bool>：宿主把值存成 Dictionary<string, object>，
+	// 直接 Get<bool> 可能抛 InvalidCastException。
+
+	private static bool ReadLogSetting(XWModRuntimeContext context)
 	{
+		try
+		{
+			if (context == null)
+			{
+				return false;
+			}
+			object v = context.Settings.Get<object>("enableLog");
+			if (v is bool b)
+			{
+				return b;
+			}
+			if (v is string s && bool.TryParse(s, out bool sb))
+			{
+				return sb;
+			}
+			if (v is System.Text.Json.JsonElement je)
+			{
+				if (je.ValueKind == System.Text.Json.JsonValueKind.True) { return true; }
+				if (je.ValueKind == System.Text.Json.JsonValueKind.False) { return false; }
+			}
+			return false;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
+
+	/// <summary>按「Mod 配置」刷新默认字号（Initialize 与 Changed 都调）。</summary>
+	private static void ApplySettings(XWModRuntimeContext context, out int fontSize)
+	{
+		fontSize = 18;
+		try
+		{
+			if (context == null) { return; }
+			object v = context.Settings.Get<object>("defaultFontSize");
+			int n = 0;
+			if (v is string s) { int.TryParse(s, out n); }
+			else if (v is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.String)
+			{ int.TryParse(je.GetString(), out n); }
+			else { try { n = System.Convert.ToInt32(v); } catch { n = 0; } }
+			if (n >= 16 && n <= 26 && (n % 2) == 0) { fontSize = n; }
+		}
+		catch { }
+	}
+
+	/// <summary>★ v2.9.5：订阅标志。</summary>
+	private XWModRuntimeContext _context;
+	private bool _settingsSubscribedWcc;
+
+	/// <summary>★ v2.9.5：配置保存后重读全部设置（defaultCategory/defaultFontSize/followFont）。</summary>
+	private void OnWccSettingsChanged(System.Collections.Generic.IReadOnlyList<string> keys)
+	{
+		try
+		{
+			ApplySettings(_context, out _fontSize);
+			ReadFollowFontSetting(_context);
+			ReadDefaultCategorySetting(_context);
+			Log("配置已更新，已重读（_defaultCat=" + (_defaultCat == "" ? "不分类" : _defaultCat) + "，字号=" + _fontSize + "）。");
+		}
+		catch { }
+	}
+
+public void Initialize(XWModRuntimeContext context)
+	{
+			try { SponsorQrRoot = context.PackageRoot; } catch { }
+			EnableLog = false;   // ★ 2026-10-14 用户要求：默认关闭所有日志（原：EnableLog = ReadLogSetting(context)）
+
+			_context = context;
+			ApplySettings(context, out _fontSize);   // 面板里的默认字号覆盖配置文件的初值
+			ReadFollowFontSetting(context);   // 是否跟随分类页字号
+			ReadDefaultCategorySetting(context);   // 默认显示的分类
+			// ★ v2.9.5：订阅配置变化（此前从未订阅 ⇒ 改配置后要重启才生效）
+			try
+			{
+				if (context?.Settings != null && !_settingsSubscribedWcc)
+				{
+					context.Settings.Changed += OnWccSettingsChanged;
+					_settingsSubscribedWcc = true;
+				}
+			}
+			catch { }
 		try
 		{
 			LoadConfig();
@@ -197,6 +297,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 
 	private void OnFrame()
 	{
+		try { SponsorQrInjector.Tick(Engine.GetMainLoop() as SceneTree, "白卡分类", SponsorQrRoot, "Resources/SponsorQR.png"); } catch { }
 		try
 		{
 			if (_tree == null || !GodotObject.IsInstanceValid(_tree))
@@ -221,6 +322,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				return;
 			}
 			Control sort = bank.cardSort;
+			if (_followFont) { FollowCategoryFont(sort); }
 			if (sort == null || !GodotObject.IsInstanceValid(sort))
 			{
 				return;
@@ -246,10 +348,12 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				_game.Button = null;                     // 换关卡 ⇒ 按钮/下拉都要重建
 				_game.Dropdown = null;
 				_game.DataId = 0;
+				_defaultApplied = false;   // 换关卡 ⇒ 允许重新应用默认分类
 			}
 			if (EnsureButton(_game, sort, "白卡分类", manualPos: true) != null)
 			{
 				EnsureDropdown(_game, sort);
+				ApplyDefaultCategory(_game);   // 默认分类（一次性）
 				FlushRePlace(_game);
 			}
 
@@ -277,6 +381,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				if (vb != null && EnsureButton(_editor, vb, "白卡分类", manualPos: false) != null)
 				{
 					EnsureDropdown(_editor, eb);
+					ApplyDefaultCategory(_editor);
 					FlushRePlace(_editor);
 				}
 			}
@@ -332,6 +437,41 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			if (t.DataId == pb.GetInstanceId() && t.GroupTags != null && t.GroupTags.Count > 0)
 			{
 				return;      // 这份卡池数据已经注入过
+			}
+			// ★ v2.9.2：「不分类」模式 ⇒ 不注入 pb.category（原生下拉不残留），
+			//   但 **GroupTags 照常构建**（本 Mod 面板的「一页全部标签」需要它）。
+			//   v2.9.1 在这里提前 return 导致 GroupTags 永远为空 ⇒ 面板空壳（用户截图的小点）。
+			if (string.IsNullOrEmpty(_defaultCat))
+			{
+				// 「不分类」：清掉注入键 + 构建 GroupTags（面板数据），但不注入 pb.category
+				var wccKeys = new System.Collections.Generic.List<string>();
+				foreach (KeyValuePair<Variant, Variant> kv2 in pb.category)
+				{
+					if (kv2.Key.VariantType == Variant.Type.String
+						&& kv2.Key.AsString().StartsWith(KeyPrefix, StringComparison.Ordinal))
+					{
+						wccKeys.Add(kv2.Key.AsString());
+					}
+				}
+				foreach (string k in wccKeys)
+				{
+					pb.category.Remove(k);
+				}
+				Godot.Collections.Array whiteEarly = pb.category.ContainsKey("White")
+					? pb.category["White"].AsGodotArray()
+					: null;
+				var whiteSetEarly = new HashSet<string>();
+				if (whiteEarly != null)
+				{
+					foreach (Variant v in whiteEarly)
+					{
+						whiteSetEarly.Add(v.AsString());
+					}
+				}
+				EnsureBaked();
+				BuildGroupTags(whiteSetEarly, t);
+				t.DataId = pb.GetInstanceId();
+				return;
 			}
 			Godot.Collections.Array white = pb.category.ContainsKey("White")
 				? pb.category["White"].AsGodotArray()
@@ -403,47 +543,70 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				}
 			}
 
-			// 写入 packetBankData（键加前缀避免与游戏键撞车）
-			foreach (KeyValuePair<string, Godot.Collections.Array> kv in tagBuckets)
-			{
-				if (kv.Value.Count > 0)
-				{
-					pb.category[KeyPrefix + kv.Key] = kv.Value;
-				}
-			}
 
-			// ── 组装「大类 → 非空标签」，供二级菜单使用（空标签不显示）──
-			var groupTags = new Dictionary<string, List<string>>();
-			int shown = 0;
-			foreach (string grp in WhiteCardCategoriesTable.GroupOrder)
-			{
-				if (!WhiteCardCategoriesTable.Groups.TryGetValue(grp, out string[] tagsOfGroup))
-				{
-					continue;
-				}
-				var list = new List<string>();
-				foreach (string tg in tagsOfGroup)
-				{
-					if (tagBuckets.TryGetValue(tg, out Godot.Collections.Array arr) && arr.Count > 0)
-					{
-						list.Add(tg);
-						shown++;
-					}
-				}
-				if (list.Count > 0)
-				{
-					groupTags[grp] = list;
-				}
-			}
-			t.GroupTags = groupTags;
-			t.OtherCount = otherCount;
-			t.DataId = pb.GetInstanceId();
-			RebuildDropdown(t);      // 卡池变了 ⇒ 菜单内容跟着刷新（回到第一级）
-
-			Log("已注入白卡标签：" + groupTags.Count + " 大类 / " + shown + " 个非空标签 / "
-				+ whiteSet.Count + " 张白卡（其中表外自动识别 " + autoHits + " 张）；"
-				+ "兜底「其他」" + otherCount + " 张。");
+	// 写入 packetBankData（键加前缀避免与游戏键撞车）
+	foreach (KeyValuePair<string, Godot.Collections.Array> kv in tagBuckets)
+	{
+		if (kv.Value.Count > 0)
+		{
+			pb.category[KeyPrefix + kv.Key] = kv.Value;
 		}
+	}
+
+	// ★ v2.11：注入「按获取章节」分组（WCC_Chapter_N → 该章解锁的白卡列表）
+	EnsureBaked();
+	var chapterBuckets = new Dictionary<int, Godot.Collections.Array>();
+	foreach (string k in whiteSet)
+	{
+		string lv = WhiteCardLevelSources.LevelOf(k);
+		if (string.IsNullOrEmpty(lv) || !lv.StartsWith("Level")) { continue; }
+		string rest = lv.Substring(5);
+		int u = rest.IndexOf('_');
+		if (u <= 0 || !int.TryParse(rest.Substring(0, u), out int ch)) { continue; }
+		if (!chapterBuckets.TryGetValue(ch, out Godot.Collections.Array arrL))
+		{
+			arrL = new Godot.Collections.Array();
+			chapterBuckets[ch] = arrL;
+		}
+		arrL.Add(k);
+	}
+	foreach (KeyValuePair<int, Godot.Collections.Array> kv in chapterBuckets)
+	{
+		pb.category[KeyPrefix + "Chapter_" + kv.Key] = kv.Value;
+	}
+
+	// ── 组装「大类 → 非空标签」，供二级菜单使用（空标签不显示）──
+	var groupTags = new Dictionary<string, List<string>>();
+	int shown = 0;
+	foreach (string grp in WhiteCardCategoriesTable.GroupOrder)
+	{
+		if (!WhiteCardCategoriesTable.Groups.TryGetValue(grp, out string[] tagsOfGroup))
+		{
+			continue;
+		}
+		var list = new List<string>();
+		foreach (string tg in tagsOfGroup)
+		{
+			if (tagBuckets.TryGetValue(tg, out Godot.Collections.Array arr) && arr.Count > 0)
+			{
+				list.Add(tg);
+				shown++;
+			}
+		}
+		if (list.Count > 0)
+		{
+			groupTags[grp] = list;
+		}
+	}
+	t.GroupTags = groupTags;
+	t.OtherCount = otherCount;
+	t.DataId = pb.GetInstanceId();
+	RebuildDropdown(t);      // 卡池变了 ⇒ 菜单内容跟着刷新（回到第一级）
+
+	Log("已注入白卡标签：" + groupTags.Count + " 大类 / " + shown + " 个非空标签 / "
+		+ whiteSet.Count + " 张白卡（其中表外自动识别 " + autoHits + " 张）；"
+		+ "兜底「其他」" + otherCount + " 张。");
+}
 		catch (Exception ex)
 		{
 			if (_diag < 101)
@@ -453,6 +616,65 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			}
 		}
 	}
+	/// <summary>★ v2.9.2：「不分类」模式的数据构建——逐卡打标签 + 组装 GroupTags/OtherCount，
+	/// 但【不】注入 pb.category（原生下拉不残留）、【不】RebuildDropdown（首屏由 ToggleFor 决定）。</summary>
+	private void BuildGroupTags(HashSet<string> whiteSet, Target t)
+	{
+		var tagBuckets = new Dictionary<string, Godot.Collections.Array>();
+		int otherCount = 0;
+		foreach (string k in whiteSet)
+		{
+			var tags = new HashSet<string>();
+			if (_baked.TryGetValue(k, out string[] bakedTags))
+			{
+				foreach (string tg in bakedTags) { tags.Add(tg); }
+			}
+			else
+			{
+				try
+				{
+					TowerDefensePacketConfig cfg = TowerDefenseManager.GetPacketConfig(k);
+					if (cfg != null && GodotObject.IsInstanceValid(cfg)
+						&& cfg.characterConfig is TowerDefensePlantConfig pc)
+					{
+						WhiteCardAutoTagger.Tag(k, pc, tags);
+					}
+				}
+				catch { }
+			}
+			if (tags.Count == 0) { tags.Add("其他"); }
+			foreach (string tg in tags)
+			{
+				if (!tagBuckets.TryGetValue(tg, out Godot.Collections.Array arr))
+				{
+					arr = new Godot.Collections.Array();
+					tagBuckets[tg] = arr;
+				}
+				arr.Add(k);
+				if (tg == "其他") { otherCount++; }
+			}
+		}
+		var groupTags = new Dictionary<string, List<string>>();
+		foreach (string grp in WhiteCardCategoriesTable.GroupOrder)
+		{
+			if (!WhiteCardCategoriesTable.Groups.TryGetValue(grp, out string[] tagsOfGroup))
+			{
+				continue;
+			}
+			var list = new List<string>();
+			foreach (string tg in tagsOfGroup)
+			{
+				if (tagBuckets.TryGetValue(tg, out Godot.Collections.Array arr) && arr.Count > 0)
+				{
+					list.Add(tg);
+				}
+			}
+			if (list.Count > 0) { groupTags[grp] = list; }
+		}
+		t.GroupTags = groupTags;
+		t.OtherCount = otherCount;
+	}
+
 
 	// ================================================================ 建 UI
 
@@ -470,6 +692,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 		public Control Parent;                           // 下拉面板挂载的父节点（重建面板时要用）
 		public int PlaceFrames;                          // 还需重贴几帧（容器最小尺寸是延迟算的）
 		public Action<string> Choose;                    // 点标签后的切换回调
+		public PacketCategoryButton.ChooseEventHandler ChooseHandler;  // ★ v2.8：固定桥接委托（订阅一次永不移除）
 	}
 
 	private readonly Target _game = new Target();     // 游戏内选卡界面
@@ -506,7 +729,10 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			//   `SpriteBrightButton.OnPressed → ButtonPressed() → OnChoose?.Invoke(category)`
 			//   ⇒ 订阅 `OnChoose`（委托类型 `ChooseEventHandler(string)`），
 			//     忽略它传来的游戏自带 category，改成切换我们自己的二级下拉。
-			btn.OnChoose += _ => ToggleFor(t);
+			// ★ v2.9：固定订阅 ToggleFor（点击弹本 Mod 面板）；「默认分类」只决定
+			//   进关后首次显示哪一页（全部标签一页铺开 / 5 大类分组），见 ApplyDefaultCategory。
+			t.ChooseHandler = _ => ToggleFor(t);
+			btn.OnChoose += t.ChooseHandler;
 			if (manualPos)
 			{
 				// 与 CardZombie 同列、向下 75px（实测间距）
@@ -686,6 +912,164 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	}
 
 	/// <summary>造一个统一样式的按钮（★ 字号取 <see cref="_fontSize"/>，尺寸随字号缩放）。</summary>
+	/// <summary>读"是否跟随分类页字号"设置（bool，默认 false）。</summary>
+	/// <summary>读「默认显示的分类」设置（string：none 或 攻击/生产/职能/系列/属性）。</summary>
+	private void ReadDefaultCategorySetting(XWModRuntimeContext context)
+	{
+		try
+		{
+			if (context == null) { return; }
+			object v = context.Settings.Get<object>(KDefaultCat);
+			string s = null;
+			if (v is string str) { s = str; }
+			else if (v is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.String) { s = je.GetString(); }
+			if (string.IsNullOrWhiteSpace(s)) { return; }
+			s = s.Trim();
+			_defaultCat = s.Equals("none", StringComparison.OrdinalIgnoreCase) ? "" : s;
+			_defaultApplied = false;   // 改了设置 ⇒ 允许重新应用
+		}
+		catch { }
+	}
+
+	/// <summary>
+	/// 应用「默认分类」：只在**每个关卡/每次重建后应用一次**（`_defaultApplied` 一次性标志）。
+	/// ⚠️ 绝不能每帧应用 —— 否则会不断重置玩家自己的选择（会表现为"选什么都跳回默认"）。
+	/// ★ v2.4.1：`_defaultCat` 为空（「不分类」）⇒ 图鉴按钮恢复**游戏原生行为**
+	///   （OnChoose → TowerDefenseBattleFeaturePacketBank.CategoryChoose(btn.category)），
+	///   同时隐藏本 Mod 的二级下拉面板。
+	/// </summary>
+	private void ApplyDefaultCategory(Target t)
+	{
+		try
+		{
+			if (_defaultApplied || t == null) { return; }
+			_defaultApplied = true;
+			// ★ v2.9.1：首次显示哪一页改由 ToggleFor（点按钮时刻）按 _defaultCat 决定，
+			//   这里只做标记，避免 InjectIntoTarget 同帧的 RebuildDropdown 覆盖。
+			_defaultApplied = true;
+		}
+		catch { }
+	}
+
+
+	/// <summary>本 Mod 分类模式的点击处理（= 原来的 ToggleFor）。
+	/// ★ v2.4.2：通过 category 字符串判定不靠谱（原生也传 category），
+	///   改由按钮实例归属：OnChoose 的 sender 没有参数 ⇒ 用点击源 = 分类按钮本身，
+	///   我们在两处（_game/_editor）各有一个按钮 ⇒ 按 Target.Button 的 InstanceId 匹配。
+	///   简化：HandleChooseForMod 由按钮闭包直接传 Target 进来（见 EnsureButton）。</summary>
+	private void HandleChooseForMod(Target t)
+	{
+		ToggleFor(t);
+	}
+
+	private static object GetSingletonM(string typeName)
+	{
+		try
+		{
+			foreach (System.Reflection.Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				Type t = null;
+				try { t = asm.GetType(typeName, false); } catch { }
+				if (t == null) { continue; }
+				System.Reflection.PropertyInfo p = t.GetProperty("Instance",
+					System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
+				if (p != null) { return p.GetValue(null); }
+				System.Reflection.FieldInfo f = t.GetField("Instance",
+					System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
+				if (f != null) { return f.GetValue(null); }
+			}
+		}
+		catch { }
+		return null;
+	}
+
+	private static object GetMemberM(object target, string name)
+	{
+		if (target == null) { return null; }
+		try
+		{
+			for (Type t = target.GetType(); t != null; t = t.BaseType)
+			{
+				System.Reflection.FieldInfo f = t.GetField(name,
+					System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+					| System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly);
+				if (f != null) { return f.GetValue(target); }
+			}
+			for (Type t = target.GetType(); t != null; t = t.BaseType)
+			{
+				System.Reflection.PropertyInfo p = t.GetProperty(name,
+					System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+					| System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly);
+				if (p != null && p.CanRead) { return p.GetValue(target); }
+			}
+		}
+		catch { }
+		return null;
+	}
+
+	private void ReadFollowFontSetting(XWModRuntimeContext context)
+	{
+		try
+		{
+			if (context == null) { return; }
+			object v = context.Settings.Get<object>(KFollowFont);
+			if (v is bool b) { _followFont = b; }
+			else if (v is string s && bool.TryParse(s, out bool sb)) { _followFont = sb; }
+			else if (v is System.Text.Json.JsonElement je
+				&& (je.ValueKind == System.Text.Json.JsonValueKind.True || je.ValueKind == System.Text.Json.JsonValueKind.False))
+			{
+				_followFont = je.GetBoolean();
+			}
+		}
+		catch { }
+	}
+
+	/// <summary>
+	/// 跟随分类页字号：从游戏右侧分类面板（`bank.cardSort`）里找一个 Label，读它的字号。
+	/// ⚠️ 找到就更新 `_fontSize` 并同步到已有的 `WCC_Button`（**只改字号，不重建**）；
+	///    按钮尺寸随字号缩放（`_fontSize + 20` 等），下次进入选卡界面重建时会用新尺寸。
+	/// </summary>
+	private void FollowCategoryFont(Control sort)
+	{
+		try
+		{
+			if (sort == null || !GodotObject.IsInstanceValid(sort)) { return; }
+			Label gameLabel = FindFirstLabel(sort, 0);
+			if (gameLabel == null) { return; }
+			int fs = gameLabel.GetThemeFontSize("font_size");
+			if (fs < 8 || fs > 72) { return; }          // 异常值不采信
+			if (fs == _lastFollowFont && fs == _fontSize) { return; }
+			_lastFollowFont = fs;
+			if (fs == _fontSize) { return; }
+			_fontSize = fs;
+			// 同步到已有按钮（只改字号）
+			Node btn = sort.GetNodeOrNull("WCC_Button");
+			if (btn is Button bb && GodotObject.IsInstanceValid(bb))
+			{
+				bb.AddThemeFontSizeOverride("font_size", _fontSize);
+			}
+			Log("跟随分类页字号 → " + _fontSize);   // Log 内部已受 EnableLog 门控
+		}
+		catch { }
+	}
+
+	/// <summary>在子树里找第一个 Label（按深度优先，最多下探 4 层）。</summary>
+	private static Label FindFirstLabel(Node root, int depth)
+	{
+		try
+		{
+			if (root == null || !GodotObject.IsInstanceValid(root) || depth > 4) { return null; }
+			foreach (Node c in root.GetChildren())
+			{
+				if (c is Label l && GodotObject.IsInstanceValid(l)) { return l; }
+				Label r = FindFirstLabel(c, depth + 1);
+				if (r != null) { return r; }
+			}
+		}
+		catch { }
+		return null;
+	}
+
 	private Button MakeButton(string text)
 	{
 		Button b = new Button();
@@ -776,9 +1160,121 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			{
 				items.Add(("其他（" + t.OtherCount + "）", () => OnCategoryClicked(t, "其他")));
 			}
+			// ★ v2.10：第一级加「按获取关卡」入口（二级列出关卡，点关卡筛该关解锁的白卡）
+			items.Add(("按获取关卡", () => ShowLevelSourcePage(t)));
 			FillGrid(grid, items, cols: 2);
 			Resize(t, items.Count, 2);
 			AddFontRow(t);      // ★ 第一级末尾追加一行「字号」选择
+		}
+		catch { }
+	}
+
+
+	/// <summary>★ v2.11：「按获取关卡」二级页——按【章节】聚合（用户要求：关卡粒度太细），点章筛该章解锁的白卡。</summary>
+	private void ShowLevelSourcePage(Target t)
+	{
+		try
+		{
+			BuildPanel(t);
+			GridContainer grid = GetGrid(t);
+			if (grid == null)
+			{
+				return;
+			}
+			SetBack(t, "← 返回", () => RebuildDropdown(t));
+			var byChapter = new Dictionary<int, List<string>>();
+			var otherKeys = new List<string>();   // ★ v2.12：非章节白卡（初始可用 / 补充包 / 生存）
+			foreach (string line in WhiteCardLevelSources.LevelSourceLines)
+			{
+				int i = line.IndexOf('|');
+				if (i <= 0) { continue; }
+				string plantKey = line.Substring(0, i);
+				string level = line.Substring(i + 1);
+				if (level.Length == 0 || !level.StartsWith("Level"))
+				{
+					otherKeys.Add(plantKey);   // 初始可用（无解锁条件）或 HybridPark/Survival 来源
+					continue;
+				}
+				string rest = level.Substring(5);
+				int u = rest.IndexOf('_');
+				if (u <= 0 || !int.TryParse(rest.Substring(0, u), out int ch))
+				{
+					otherKeys.Add(plantKey);
+					continue;
+				}
+				if (!byChapter.TryGetValue(ch, out List<string> list2))
+				{
+					list2 = new List<string>();
+					byChapter[ch] = list2;
+				}
+				list2.Add(plantKey);
+			}
+			var chKeys = new List<int>(byChapter.Keys);
+			chKeys.Sort();
+			var items2 = new List<(string Text, Action Act)>();
+			foreach (int ch in chKeys)
+			{
+				int cnt = byChapter[ch].Count;
+				string label = "第" + ch + "章（" + cnt + "）";
+				int captured = ch;
+				items2.Add((label, () => OnChapterClicked(t, captured, byChapter[captured])));
+			}
+			// ★ v2.12：「其他」= 未被分到章节的植物（初始可用 / 补充包 / 生存模式）
+			if (otherKeys.Count > 0)
+			{
+				items2.Add(("其他（" + otherKeys.Count + "）", () => OnOtherChapterClicked(t, otherKeys)));
+			}
+			FillGrid(grid, items2, cols: 2);
+			Resize(t, items2.Count, 2);
+		}
+		catch { }
+	}
+
+
+	/// <summary>★ v2.12：点「其他」⇒ 未被分到章节的植物（初始可用/补充包/生存）。</summary>
+	private void OnOtherChapterClicked(Target t, List<string> plantKeys)
+	{
+		try
+		{
+			string key = KeyPrefix + "Chapter_Other";
+			TowerDefenseManager mgr = TowerDefenseManager.Instance;
+			TowerDefensePacketBankData pb = mgr?.GetPacketBankFeature()?.packetBankData;
+			if (pb != null && GodotObject.IsInstanceValid(pb))
+			{
+				var arr = new Godot.Collections.Array();
+				foreach (string k in plantKeys) { arr.Add(k); }
+				pb.category[key] = arr;
+			}
+			if (t.Choose != null)
+			{
+				t.Choose(key);
+			}
+			Log("已切换到章节-其他（" + plantKeys.Count + " 株）。");
+		}
+		catch { }
+	}
+
+	/// <summary>★ v2.11：点了某章 ⇒ 将该章解锁的白卡列表写入 pb.category（WCC_Chapter_N）并切换。
+	/// pb 按 t.DataId 从节点树找（TryCollectInfo 同款扫描）。</summary>
+	private void OnChapterClicked(Target t, int chapter, List<string> plantKeys)
+	{
+		try
+		{
+			string key = KeyPrefix + "Chapter_" + chapter;
+			// pb 与 _game 同源：TowerDefenseManager.GetPacketBankFeature().packetBankData（Resource，非 Node）
+			TowerDefenseManager mgr = TowerDefenseManager.Instance;
+			TowerDefensePacketBankData pb = mgr?.GetPacketBankFeature()?.packetBankData;
+			if (pb != null && GodotObject.IsInstanceValid(pb))
+			{
+				var arr = new Godot.Collections.Array();
+				foreach (string k in plantKeys) { arr.Add(k); }
+				pb.category[key] = arr;
+			}
+			if (t.Choose != null)
+			{
+				t.Choose(key);
+			}
+			Log("已切换到第" + chapter + "章（" + plantKeys.Count + " 株）。");
 		}
 		catch { }
 	}
@@ -1003,7 +1499,22 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			bool willShow = !t.Dropdown.Visible;
 			if (willShow)
 			{
-				RebuildDropdown(t);      // 回到第一级
+				// ★ v2.9.1：首次展开的页面由「默认显示哪一页」配置决定——
+				//   不分类 = ShowAllTags（一页铺开全部标签）；分类 = RebuildDropdown（5 大类分组）。
+				//   之前在进关时预设（ApplyDefaultCategory），但 InjectIntoTarget 同帧稍后
+				//   会再跑一次 RebuildDropdown 覆盖掉 ⇒ 改到点击时刻设置，时序上不可被覆盖。
+				if (string.IsNullOrEmpty(_defaultCat))
+				{
+					ShowAllTags(t);          // 不分类 = 一页全部标签
+				}
+				else if (_defaultCat == "章节")
+				{
+					ShowLevelSourcePage(t);  // 按获取章节 = 先显示章节列表
+				}
+				else
+				{
+					RebuildDropdown(t);      // 分类 = 5 大类分组
+				}
 				PlaceFor(t);
 			}
 			t.Dropdown.Visible = willShow;

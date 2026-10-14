@@ -2,21 +2,119 @@
   "schemaVersion": 2,
   "id": "whitecardcategories",
   "name": "白卡分类",
-  "version": "2.3.0",
-  "author": "本地",
-  "description": "在选卡界面右侧分类栏「僵尸卡」下方新增「白卡分类」按钮（外观与游戏自带分类按钮一致）：点开是**二级菜单** —— 第一级为 5 大类（攻击 / 生产 / 职能 / 系列 / 属性），第二级为该大类下的具体标签（一次性 / 射击 / 产阳光 / 坚果 / 豌豆 / 夜行 …），点某标签即把待选区切换成带该标签的白卡植物。只覆盖白卡，一张卡可带多个标签。标签体系完全取自《白卡植物标签表.xlsx》：5 大类来自「标签字典」的分组列，每株植物的标签来自「白卡植物标签」的标签列（188 株 / 71 标签，构建期烘焙）。另按表格「标签字典」的判定依据实现**运行时自动识别**（配置标志位 + 组件集 + 名称关键词），游戏更新或其它 Mod 新增的白卡即使不在表里也能自动归类，仍判不出的进「其他」，不会漏卡。第一级另有「显示所有标签」可一次铺开全部标签，该页首行有「显示标签分类」返回大类列表。空标签不显示。v2.2.0：标签按钮改大（字号 18、更大的点击区）；修复「进所有标签再返回后面板尺寸异常」—— 根因是 Control.size 只涨不缩，现改为换层时重建面板节点。v2.1.1：列数按视口自适应（不再固定 4 列），矮窗口不再截断。 v2.3.0：第一级（大类页）新增**字号选择**（16/18/20/22/24/26），按钮尺寸与列数随字号自动缩放；选择写入 user://WhiteCardCategories.cfg 持久化，重启仍生效。",
+  "version": "2.12.1",
+  "author": "apples1949",
+  "description": "在选卡界面的分类栏下方新增「白卡分类」按钮：点开按标签快速筛选白卡植物（5 大类 / 71 标签 / 198 株）。默认显示模式可在下方配置（不分类 / 分类）。",
+  "playInstructions": "选卡界面按分类筛选植物，白卡也能分类浏览。\n1. 默认显示哪个分类、默认字号、是否跟随分类页字号，都在配置页里改。\n2. 选项 → Mod 管理 → 白卡分类 → 配置。",
   "dependencies": [],
   "conflicts": [],
   "provides": {},
   "overrides": {},
   "scripts": [],
+  "settings": [
+    {
+      "key": "defaultFontSize",
+      "type": "enum",
+      "label": "默认字号",
+      "group": "显示",
+      "default": "18",
+      "description": "面板文字字号（16~26 偶数）。注意：若之前在面板里点过「字号」选择，会以那次选择为准（存于本机 cfg）；想用这里的值请告诉我清除记录或改这里为相同值。",
+      "applyMode": "immediate",
+      "affectsGameplay": false,
+      "options": [
+        {
+          "value": "16",
+          "label": "16"
+        },
+        {
+          "value": "18",
+          "label": "18"
+        },
+        {
+          "value": "20",
+          "label": "20"
+        },
+        {
+          "value": "22",
+          "label": "22"
+        },
+        {
+          "value": "24",
+          "label": "24"
+        },
+        {
+          "value": "26",
+          "label": "26"
+        }
+      ]
+    },
+    {
+      "key": "defaultCategory",
+      "type": "enum",
+      "label": "首选分类方式",
+      "group": "显示",
+      "default": "none",
+      "description": "进关后点「白卡分类」按钮时默认显示哪一页：不分类 = 一页铺开全部标签；分类 = 先显示 5 大类分组；按获取章节 = 先显示章节列表（第1章～第10章+其他）。",
+      "applyMode": "immediate",
+      "affectsGameplay": false,
+      "options": [
+        {
+          "value": "none",
+          "label": "不分类（一页全部标签）"
+        },
+        {
+          "value": "分类",
+          "label": "分类（先显示 5 大类）"
+        },
+        {
+          "value": "章节",
+          "label": "按获取章节（先显示章节列表）"
+        }
+      ]
+    },
+    {
+      "key": "followCategoryFontSize",
+      "type": "bool",
+      "label": "跟随分类页字号",
+      "group": "显示",
+      "default": false,
+      "description": "开启后，本 Mod 按钮的字号会跟着游戏右侧分类栏的字号走（游戏里改字号后，重进选卡界面即同步）。",
+      "applyMode": "immediate",
+      "affectsGameplay": false
+    },
+    {
+      "key": "aboutChangelog",
+      "type": "text",
+      "label": "更新内容",
+      "group": "关于",
+      "content": "v2.12.1 · 2026-10-11\n新增：章节分类里加「其他」（初始可用/补充包/生存来源的白卡）；「首选分类方式」配置新增「按获取章节」选项（点按钮默认显示章节列表）。\nv2.11.0 · 2026-10-11\n按获取关卡改为按获取章节。\n（更早略）"
+    },
+    {
+      "key": "enableLog",
+      "type": "bool",
+      "label": "输出诊断日志",
+      "group": "诊断",
+      "description": "排查问题时打开，会把运行状态写进 godot.log。平时关掉，不刷日志。",
+      "applyMode": "immediate",
+      "affectsGameplay": false,
+      "default": false
+    },
+    {
+      "key": "aboutAuthor",
+      "type": "richtext",
+      "label": "作者与链接",
+      "group": "关于",
+      "content": "白卡分类 v2.4.0 · 作者：apples1949\n\n[url=https://space.bilibili.com/186773722]B 站空间[/url]\n[url=https://apples1949.lanzouc.com/b007uuknqd]蓝奏云下载（密码 762b）[/url]\n\n本模组为玩家自制 Mod，与《植物大战僵尸杂交重制版》官方无隶属关系。\n赞助：微信扫码支持作者（见下方收款码图片）。"
+    }
+  ],
   "runtimeAssembly": "Runtime/ModAssembly.dll",
   "runtimeEntryType": "WhiteCardCategoriesEntry",
-  "runtimeApiVersion": 1,
+  "runtimeApiVersion": 3,
   "runtimeAssemblyPolicy": "optional",
   "blueprints": [],
   "translations": [],
   "resources": [
+    "Resources/SponsorQR.png",
     "Runtime/ModAssembly.dll"
   ]
 }

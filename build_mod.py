@@ -143,12 +143,13 @@ def package():
     if bad:
         log("[package] ❌ Runtime/ 有非法文件（会整包拒收）: %s" % bad)
         return False
-    actual = sorted(["Runtime/ModAssembly.dll"], key=str.lower)
+    actual = sorted(["Runtime/ModAssembly.dll", "Resources/SponsorQR.png"], key=str.lower)
     declared = sorted(man.get("resources", []), key=str.lower)
     if actual != declared:
         log("[package] ❌ resources 声明与实际不一致: %s vs %s" % (declared, actual))
         return False
-    if man.get("runtimeAssembly") != "Runtime/ModAssembly.dll" or man.get("runtimeApiVersion") != 1:
+    _api = man.get("runtimeApiVersion")
+    if man.get("runtimeAssembly") != "Runtime/ModAssembly.dll" or not isinstance(_api, int) or _api < 1:
         log("[package] ❌ runtime 字段不对")
         return False
 
@@ -156,6 +157,7 @@ def package():
     with zipfile.ZipFile(DIST, "w", zipfile.ZIP_DEFLATED) as z:
         z.write(os.path.join(BASE, "mod.json"), "mod.json")
         z.write(dll, "Runtime/ModAssembly.dll")
+        z.write(os.path.join(BASE, "Resources", "SponsorQR.png"), "Resources/SponsorQR.png")
     with zipfile.ZipFile(DIST) as z:
         nl = z.namelist()
     log("[package] %s  %d B  内容=%s" % (DIST, os.path.getsize(DIST), nl))
@@ -230,5 +232,9 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(_lp), exist_ok=True)
     with open(_lp, "w", encoding="utf-8") as f:
         f.write(txt)
+    try:
+        sys.stdout.reconfigure(encoding=sys.stdout.encoding or "utf-8", errors="replace")
+    except Exception:
+        pass
     print(txt)
     sys.exit(rc)
