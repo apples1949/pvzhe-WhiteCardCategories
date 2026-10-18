@@ -11,7 +11,7 @@
 | Mod ID | `whitecardcategories` |
 | 程序集 | `JTYWhiteCardCategories` → 包内 `Runtime/ModAssembly.dll` |
 | 入口类 | `WhiteCardCategoriesEntry` |
-| 当前版本 | 2.13.0 |
+| 当前版本 | 2.14.1 |
 | 分类 | 工具与前置 |
 
 ## 数据来源：《白卡植物标签表.xlsx》
@@ -91,6 +91,53 @@
 `applyMode: immediate`，改完立刻生效 —— 关闭时是**隐藏已有按钮**（不是只在创建时跳过），
 所以战斗中/图鉴打开着时改也会立即消失。
 
+## 按获取章节（v2.14 新增）
+
+第一级菜单底部的 **「按获取章节」** 入口，按**图鉴里写的获取方式**把白卡分成章节组，
+而不是按 `.tres` 的 `unlockCheckList.levelSaveKey`（后者只有"通关解锁"才有值，
+水晶兑换/商店/抽奖/在线关卡的白卡全是空的 ⇒ 旧版会有 49 株掉进「其他」）。
+
+| 组 | 判据（图鉴「获取方式」正则） | 0.30 命中 |
+| --- | --- | --- |
+| 第1~10章 | `通关冒险模式 (\d+)-(\d+)` | 13/13/13/13/13/13/18/18/18/18 = 150 |
+| 杂交乐园 | `通关杂交乐园“XXX”关卡` | 3 |
+| 在线关卡 | `在线关卡奖励 消耗 N 颗水晶兑换` | 42 |
+| 商店购买 | `商店购买 “XXX”` | 1 |
+| 抽奖盒子 | `通关抽奖盒子无尽版10回合` | 1 |
+| 初始可用 | 图鉴无「获取方式」字段 | 1 |
+| 其他 | 以上都不匹配（兜底，正常应为 0） | 0 |
+
+**合计 198 株 = 游戏 0.30 的白卡总数**，全覆盖，无「其他」。
+
+数据表在 `runtime_src/WhiteCardChapterSources.cs`（**由脚本生成，勿手改**）：
+
+```csharp
+ChapterGroupLines   // "组码|显示名|权重"   ← 15 条（A1..A10, HY, ON, SH, LT, BA, +未用到的预留组）
+PlantChapterLines   // "植物键|组码",  // 中文名
+ChapterOf(key)      // 键 → 组码（查不到返回 ""，调用方回落到 OT 兜底）
+OrderedCodes        // 按权重排序的全部组码，决定菜单里的先后
+LabelOf(code)       // 组码 → 显示名
+```
+
+菜单里每组显示成 `显示名（株数）`，`OT` 兜底组固定排在最后且仅在非空时出现。
+点击某组：选卡界面写 `category["WCC_Chapter_<组码>"]` 后切分类；图鉴则走
+`FilterAlmanacPage`（与标签筛选同一条路径）。
+
+### 章节数据怎么来的（双路生成）
+
+`tools/gen_chapter_sources.py` 合并两个数据源：
+
+1. **xlsx（权威）** —— `data/白卡植物标签表.xlsx` 的 `图鉴说明` 工作表里
+   「获取方式：…」那段文本。顺序 = 表格顺序。
+2. **游戏解包（补齐）** —— 用于 xlsx 之后新版本新增的白卡：
+   * 白卡名单：`Asset/Config/PacketBank/PacketBankResource.json` → `GeneralPlant.Category.White`
+   * 获取方式：`Translate.zh.translation` 里该植物图鉴条目的「获取方式」文本（与 xlsx 同口径），
+     拿不到时回退 packet `.tres` 的 `levelSaveKey`
+   * 中文名：`Asset/Translate/Translate.csv`
+
+⇒ 以后游戏再加新白卡，只要解包里带「获取方式」文本就会自动归到对应章节，**不用手改表**。
+脚本需要工程根目录有 `unpack/`（0.30 解包），路径写在脚本顶部 `BASE`。
+
 ## 字号选择（第一级底部）
 
 第一级面板底部有一行 **`字号  16 18 20 22 24 26`**（当前字号用**绿色高亮**标出）：
@@ -114,7 +161,7 @@
 
 ## 自动识别（为新版本 / 其它 Mod 的白卡兜底）
 
-烘焙表只覆盖制表时的 188 株；**游戏更新或其它 Mod 新增的白卡不在表里** ⇒
+烘焙表只覆盖制表时的 188 株（游戏 0.30 的白卡总数是 198）；**游戏更新或其它 Mod 新增的白卡不在表里** ⇒
 由 `WhiteCardAutoTagger` 按表格「标签字典」的**判定依据**自动识别，仍判不出的进「其他」。
 
 | 判据来源 | 覆盖的标签 | 实现 |
@@ -166,13 +213,15 @@ WhiteCardCategories/
 ├── runtime_src/                 ← C# 源码
 │   ├── WhiteCardCategoriesEntry.cs    主入口（UI + 注入 + 二级菜单）
 │   ├── WhiteCardAutoTagger.cs         运行时自动识别标签
-│   └── WhiteCardCategoriesTable.cs    ★ 由表格生成的烘焙表（勿手改）
+│   ├── WhiteCardCategoriesTable.cs    ★ 由表格生成的烘焙表（勿手改）
+│   └── WhiteCardChapterSources.cs     ★ 由解包+xlsx生成的章节表（勿手改）
 ├── data/
 │   ├── 白卡植物标签表.xlsx       ★ 标签体系的**原始数据源**
 │   └── whitecard_tags.json      由表格导出的中间数据（可重建）
 ├── tools/
 │   ├── extract_whitecard_tags.py     xlsx → json（含校验）
 │   ├── gen_whitecard_table.py        json → WhiteCardCategoriesTable.cs
+│   ├── gen_chapter_sources.py        xlsx + 解包 → WhiteCardChapterSources.cs
 │   └── verify_table_roundtrip.py     ★ 回环校验：C# 表 vs xlsx 逐项比对
 ├── Runtime/ModAssembly.dll      ← 打包用（编译产物改名而来）
 └── dist/WhiteCardCategories.pmod ← 成品
@@ -185,6 +234,9 @@ WhiteCardCategories/
 python tools\extract_whitecard_tags.py     # xlsx -> data/whitecard_tags.json（当场校验）
 python tools\gen_whitecard_table.py        # json -> runtime_src/WhiteCardCategoriesTable.cs
 python tools\verify_table_roundtrip.py     # 回环校验：C# 表 vs 表格逐项比对
+
+# 1b) 游戏更新了 ⇒ 重生成章节表（需要工程根目录有 unpack/）
+python tools\gen_chapter_sources.py        # -> runtime_src/WhiteCardChapterSources.cs
 
 # 2) 编译 + 打包 + 装机
 python build_mod.py --install
@@ -246,6 +298,13 @@ private static readonly bool EnableLog = false;   // 置 true 重新构建即可
 
 ## 变更记录
 
+* **v2.14.1** —— 适配游戏 0.30.0：新增的第 10 章 10-11～10-20 共 10 株白卡（魔法睡莲 /
+  寒冰海草 / 魔法大嘴花 / 洋流高坚果 / 精灵胆小菇 / 魔法海蘑菇 / 魔法大喷菇 / 魔法猫尾草 /
+  巫师南瓜 / 魔法石坚果）并入「第10章」⇒ 章节分类 188 → **198 株**。章节表改为
+  「xlsx + 解包」双路生成，以后新白卡自动归类。
+* **v2.14.0** —— 修「章节分类不全」（玩家反馈）：数据源从 `.tres` 的 `levelSaveKey`
+  换成图鉴「获取方式」文本，白卡全部有归属，不再有 49 株掉进「其他」；新增
+  在线关卡 / 商店购买 / 杂交乐园 / 抽奖盒子 / 初始可用 五组；入口改名「按获取章节」。
 * **v2.13.0** —— 图鉴植物页左上角新增同款「白卡分类」按钮 + 标签筛选；新增
   `showInBattleSelect` / `showInAlmanac` 两个显示开关。
 * v2.12.3 —— 修「点标签后是空池」：标签桶改为**点击时**按烘焙表现算，而不是注入阶段预写。

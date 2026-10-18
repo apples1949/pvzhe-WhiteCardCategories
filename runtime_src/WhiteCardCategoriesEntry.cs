@@ -51,6 +51,9 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	/// <summary>注入到 packetBankData 的标签键前缀（避免与游戏自带键撞车）。</summary>
 	private const string KeyPrefix = "WCC_";
 
+	/// <summary>★ v2.14：章节兜底组编码 —— xlsx「获取方式」里没有收录的白卡（游戏更新新增）都归这里。</summary>
+	private const string ChapterFallbackCode = "OT";
+
 	/// <summary>诊断日志（默认关；排查时置 true 重新构建）。</summary>
 	private static bool EnableLog;   // 由 Initialize 从「Mod 配置」读取（原为编译期常量）
 
@@ -616,24 +619,23 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 		}
 	}
 
-	// ★ v2.11：注入「按获取章节」分组（WCC_Chapter_N → 该章解锁的白卡列表）
+	// ★ v2.14：注入「按获取章节」分组（WCC_Chapter_<组码> → 该组白卡列表）
+	//   数据源从 .tres 的 levelSaveKey 换成 xlsx「图鉴说明」的「获取方式」文本，
+	//   覆盖 通关冒险模式 X-Y / 在线关卡水晶兑换 / 商店购买 / 杂交乐园 / 抽奖盒子 / 初始可用。
 	EnsureBaked();
-	var chapterBuckets = new Dictionary<int, Godot.Collections.Array>();
+	var chapterBuckets = new Dictionary<string, Godot.Collections.Array>();
 	foreach (string k in whiteSet)
 	{
-		string lv = WhiteCardLevelSources.LevelOf(k);
-		if (string.IsNullOrEmpty(lv) || !lv.StartsWith("Level")) { continue; }
-		string rest = lv.Substring(5);
-		int u = rest.IndexOf('_');
-		if (u <= 0 || !int.TryParse(rest.Substring(0, u), out int ch)) { continue; }
-		if (!chapterBuckets.TryGetValue(ch, out Godot.Collections.Array arrL))
+		string code = WhiteCardChapterSources.ChapterOf(k);
+		if (string.IsNullOrEmpty(code)) { code = ChapterFallbackCode; }   // 表外新卡 ⇒ 兜底「其他」
+		if (!chapterBuckets.TryGetValue(code, out Godot.Collections.Array arrL))
 		{
 			arrL = new Godot.Collections.Array();
-			chapterBuckets[ch] = arrL;
+			chapterBuckets[code] = arrL;
 		}
 		arrL.Add(k);
 	}
-	foreach (KeyValuePair<int, Godot.Collections.Array> kv in chapterBuckets)
+	foreach (KeyValuePair<string, Godot.Collections.Array> kv in chapterBuckets)
 	{
 		pb.category[KeyPrefix + "Chapter_" + kv.Key] = kv.Value;
 	}
@@ -1249,8 +1251,8 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			{
 				items.Add(("✕ 取消筛选", () => ClearAlmanacFilter(t)));
 			}
-			// ★ v2.10：第一级加「按获取关卡」入口（二级列出关卡，点关卡筛该关解锁的白卡）
-			items.Add(("按获取关卡", () => ShowLevelSourcePage(t)));
+			// ★ v2.14：第一级「按获取章节」入口（二级列出来源分组，点分组筛该组的白卡）
+			items.Add(("按获取章节", () => ShowLevelSourcePage(t)));
 			FillGrid(grid, items, cols: 2);
 			Resize(t, items.Count, 2);
 			AddFontRow(t);      // ★ 第一级末尾追加一行「字号」选择
@@ -1259,7 +1261,9 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	}
 
 
-	/// <summary>★ v2.11：「按获取关卡」二级页——按【章节】聚合（用户要求：关卡粒度太细），点章筛该章解锁的白卡。</summary>
+	/// <summary>★ v2.14：「按获取章节」二级页——按【获取方式】分组（xlsx 图鉴说明），点分组筛该组白卡。
+	/// 分组清单由 <see cref="WhiteCardChapterSources.ChapterGroupLines"/> 决定（15 组，188 株全覆盖，
+	/// 不再有「其他」兜底）。</summary>
 	private void ShowLevelSourcePage(Target t)
 	{
 		try
@@ -1271,47 +1275,36 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				return;
 			}
 			SetBack(t, "← 返回", () => RebuildDropdown(t));
-			var byChapter = new Dictionary<int, List<string>>();
-			var otherKeys = new List<string>();   // ★ v2.12：非章节白卡（初始可用 / 补充包 / 生存）
-			foreach (string line in WhiteCardLevelSources.LevelSourceLines)
+			// ★ v2.14：按 xlsx「获取方式」的新章节清单分组（15 组，188 株全部有归属）
+			var byGroup = new Dictionary<string, List<string>>();
+			foreach (string line in WhiteCardChapterSources.PlantChapterLines)
 			{
 				int i = line.IndexOf('|');
 				if (i <= 0) { continue; }
 				string plantKey = line.Substring(0, i);
-				string level = line.Substring(i + 1);
-				if (level.Length == 0 || !level.StartsWith("Level"))
-				{
-					otherKeys.Add(plantKey);   // 初始可用（无解锁条件）或 HybridPark/Survival 来源
-					continue;
-				}
-				string rest = level.Substring(5);
-				int u = rest.IndexOf('_');
-				if (u <= 0 || !int.TryParse(rest.Substring(0, u), out int ch))
-				{
-					otherKeys.Add(plantKey);
-					continue;
-				}
-				if (!byChapter.TryGetValue(ch, out List<string> list2))
+				string code = line.Substring(i + 1);
+				if (code.Length == 0) { continue; }
+				if (!byGroup.TryGetValue(code, out List<string> list2))
 				{
 					list2 = new List<string>();
-					byChapter[ch] = list2;
+					byGroup[code] = list2;
 				}
 				list2.Add(plantKey);
 			}
-			var chKeys = new List<int>(byChapter.Keys);
-			chKeys.Sort();
 			var items2 = new List<(string Text, Action Act)>();
-			foreach (int ch in chKeys)
+			foreach (string code in WhiteCardChapterSources.OrderedCodes)
 			{
-				int cnt = byChapter[ch].Count;
-				string label = "第" + ch + "章（" + cnt + "）";
-				int captured = ch;
-				items2.Add((label, () => OnChapterClicked(t, captured, byChapter[captured])));
+				if (!byGroup.TryGetValue(code, out List<string> keys) || keys.Count == 0) { continue; }
+				string label = WhiteCardChapterSources.LabelOf(code) + "（" + keys.Count + "）";
+				string cap = code;
+				List<string> capKeys = keys;
+				items2.Add((label, () => OnChapterClicked(t, cap, capKeys)));
 			}
-			// ★ v2.12：「其他」= 未被分到章节的植物（初始可用 / 补充包 / 生存模式）
-			if (otherKeys.Count > 0)
+			// 兜底组：「其他」= xlsx 表外的新白卡（游戏更新 / 其它 Mod 新增），永远排在最后
+			if (byGroup.TryGetValue(ChapterFallbackCode, out List<string> fbKeys) && fbKeys.Count > 0)
 			{
-				items2.Add(("其他（" + otherKeys.Count + "）", () => OnOtherChapterClicked(t, otherKeys)));
+				items2.Add(("其他（" + fbKeys.Count + "）",
+					() => OnChapterClicked(t, ChapterFallbackCode, fbKeys)));
 			}
 			FillGrid(grid, items2, cols: 2);
 			Resize(t, items2.Count, 2);
@@ -1320,18 +1313,22 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	}
 
 
-	/// <summary>★ v2.12：点「其他」⇒ 未被分到章节的植物（初始可用/补充包/生存）。</summary>
-	private void OnOtherChapterClicked(Target t, List<string> plantKeys)
+	/// <summary>★ v2.14：点了某个来源分组 ⇒ 把该组白卡列表写入 pb.category（WCC_Chapter_&lt;组码&gt;）并切换。
+	/// pb 从 TowerDefenseManager.Instance 取（Resource，非 Node）。</summary>
+	private void OnChapterClicked(Target t, string groupCode, List<string> plantKeys)
 	{
 		try
 		{
+			string groupLabel = groupCode == ChapterFallbackCode
+				? "其他"
+				: WhiteCardChapterSources.LabelOf(groupCode);
 			// ★ v2.13：图鉴侧走本地筛选，不写战斗卡池
 			if (ReferenceEquals(t, _almanac))
 			{
-				FilterAlmanacPage(t, new HashSet<string>(plantKeys ?? new List<string>()), "章节-其他");
+				FilterAlmanacPage(t, new HashSet<string>(plantKeys ?? new List<string>()), groupLabel);
 				return;
 			}
-			string key = KeyPrefix + "Chapter_Other";
+			string key = KeyPrefix + "Chapter_" + groupCode;
 			TowerDefenseManager mgr = TowerDefenseManager.Instance;
 			TowerDefensePacketBankData pb = mgr?.GetPacketBankFeature()?.packetBankData;
 			if (pb != null && GodotObject.IsInstanceValid(pb))
@@ -1344,38 +1341,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			{
 				t.Choose(key);
 			}
-			Log("已切换到章节-其他（" + plantKeys.Count + " 株）。");
-		}
-		catch { }
-	}
-
-	/// <summary>★ v2.11：点了某章 ⇒ 将该章解锁的白卡列表写入 pb.category（WCC_Chapter_N）并切换。
-	/// pb 按 t.DataId 从节点树找（TryCollectInfo 同款扫描）。</summary>
-	private void OnChapterClicked(Target t, int chapter, List<string> plantKeys)
-	{
-		try
-		{
-			// ★ v2.13：图鉴侧走本地筛选，不写战斗卡池
-			if (ReferenceEquals(t, _almanac))
-			{
-				FilterAlmanacPage(t, new HashSet<string>(plantKeys ?? new List<string>()), "第" + chapter + "章");
-				return;
-			}
-			string key = KeyPrefix + "Chapter_" + chapter;
-			// pb 与 _game 同源：TowerDefenseManager.GetPacketBankFeature().packetBankData（Resource，非 Node）
-			TowerDefenseManager mgr = TowerDefenseManager.Instance;
-			TowerDefensePacketBankData pb = mgr?.GetPacketBankFeature()?.packetBankData;
-			if (pb != null && GodotObject.IsInstanceValid(pb))
-			{
-				var arr = new Godot.Collections.Array();
-				foreach (string k in plantKeys) { arr.Add(k); }
-				pb.category[key] = arr;
-			}
-			if (t.Choose != null)
-			{
-				t.Choose(key);
-			}
-			Log("已切换到第" + chapter + "章（" + plantKeys.Count + " 株）。");
+			Log("已切换到「" + groupLabel + "」（" + plantKeys.Count + " 株）。");
 		}
 		catch { }
 	}
