@@ -191,14 +191,26 @@ def install():
                 log("[cache] move 失败（已忽略）：%r" % ex)
     en = os.path.join(MODS, "enabled_mods.json")
     try:
-        ids = []
+        # 该文件有两种历史格式：
+        #   旧：["modid1", "modid2"]
+        #   新：{"schemaVersion": 2, "enabledIds": [...], "preferredOrder": [...]}
+        # 两种都要支持，否则会抛 AttributeError 且不写入（Mod 看起来"装了但没启用"）。
+        data = None
         if os.path.isfile(en):
             with open(en, encoding="utf-8") as f:
-                ids = json.load(f)
+                data = json.load(f)
+        if isinstance(data, dict):
+            ids = data.setdefault("enabledIds", [])
+        elif isinstance(data, list):
+            data = {"schemaVersion": 2, "enabledIds": data}
+            ids = data["enabledIds"]
+        else:
+            data = {"schemaVersion": 2, "enabledIds": []}
+            ids = data["enabledIds"]
         if MOD_ID not in ids:
             ids.append(MOD_ID)
             with open(en, "w", encoding="utf-8") as f:
-                json.dump(ids, f, ensure_ascii=False, indent=2)
+                json.dump(data, f, ensure_ascii=False, indent=2)
             log("[install] enabled_mods.json += " + MOD_ID)
         else:
             log("[install] enabled_mods.json 已含 " + MOD_ID)

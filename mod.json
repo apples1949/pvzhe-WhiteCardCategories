@@ -2,10 +2,10 @@
   "schemaVersion": 2,
   "id": "whitecardcategories",
   "name": "白卡分类",
-  "version": "2.12.1",
+  "version": "2.13.0",
   "author": "apples1949",
-  "description": "在选卡界面的分类栏下方新增「白卡分类」按钮：点开按标签快速筛选白卡植物（5 大类 / 71 标签 / 198 株）。默认显示模式可在下方配置（不分类 / 分类）。",
-  "playInstructions": "选卡界面按分类筛选植物，白卡也能分类浏览。\n1. 默认显示哪个分类、默认字号、是否跟随分类页字号，都在配置页里改。\n2. 选项 → Mod 管理 → 白卡分类 → 配置。",
+  "description": "在选卡界面的分类栏下方、以及植物图鉴页左上角新增「白卡分类」按钮：点开按标签快速筛选白卡植物（5 大类 / 71 标签 / 198 株）。两个界面可分别开关，默认显示模式与字号都可在下方配置。",
+  "playInstructions": "选卡界面与植物图鉴都能按分类筛选白卡。\n1. 战斗前选卡：右侧分类栏下方点「白卡分类」→ 选标签，卡池立刻筛成该标签的白卡。\n2. 植物图鉴：进「图鉴 → 植物」后点左上角「白卡分类」→ 选标签，当前页只留下该标签的植物；翻页或点「取消筛选」恢复。\n3. 不想在某个界面显示这个按钮：配置里把「选卡界面显示分类按钮」或「图鉴界面显示分类按钮」关掉。\n4. 选项 → Mod 管理 → 白卡分类 → 配置。",
   "dependencies": [],
   "conflicts": [],
   "provides": {},
@@ -83,11 +83,31 @@
       "affectsGameplay": false
     },
     {
+      "key": "showInBattleSelect",
+      "type": "bool",
+      "label": "选卡界面显示分类按钮",
+      "group": "显示",
+      "default": true,
+      "description": "关闭后，战斗前的选卡界面（含自制关卡的编辑卡牌库）不再显示「白卡分类」按钮。改完立即生效。",
+      "applyMode": "immediate",
+      "affectsGameplay": false
+    },
+    {
+      "key": "showInAlmanac",
+      "type": "bool",
+      "label": "图鉴界面显示分类按钮",
+      "group": "显示",
+      "default": true,
+      "description": "关闭后，植物图鉴页左上角不再显示「白卡分类」按钮。改完立即生效。",
+      "applyMode": "immediate",
+      "affectsGameplay": false
+    },
+    {
       "key": "aboutChangelog",
       "type": "text",
       "label": "更新内容",
       "group": "关于",
-      "content": "v2.12.1 · 2026-10-11\n新增：章节分类里加「其他」（初始可用/补充包/生存来源的白卡）；「首选分类方式」配置新增「按获取章节」选项（点按钮默认显示章节列表）。\nv2.11.0 · 2026-10-11\n按获取关卡改为按获取章节。\n（更早略）"
+      "content": "v2.13.0 · 2026-10-18\n新增：植物图鉴页左上角也有「白卡分类」按钮了（点开按标签筛选当前图鉴页；翻页或点「取消筛选」恢复）。\n新增两个配置开关：「选卡界面显示分类按钮」「图鉴界面显示分类按钮」，可分别关掉。\nv2.12.1 · 2026-10-11\n新增：章节分类里加「其他」（初始可用/补充包/生存来源的白卡）；「首选分类方式」配置新增「按获取章节」选项（点按钮默认显示章节列表）。\nv2.11.0 · 2026-10-11\n按获取关卡改为按获取章节。\n（更早略）"
     },
     {
       "key": "enableLog",
@@ -104,7 +124,7 @@
       "type": "richtext",
       "label": "作者与链接",
       "group": "关于",
-      "content": "白卡分类 v2.4.0 · 作者：apples1949\n\n[url=https://space.bilibili.com/186773722]B 站空间[/url]\n[url=https://apples1949.lanzouc.com/b007uuknqd]蓝奏云下载（密码 762b）[/url]\n\n本模组为玩家自制 Mod，与《植物大战僵尸杂交重制版》官方无隶属关系。\n赞助：微信扫码支持作者（见下方收款码图片）。"
+      "content": "白卡分类 v2.13.0 · 作者：apples1949\n\n[url=https://space.bilibili.com/186773722]B 站空间[/url]\n[url=https://apples1949.lanzouc.com/b007uuknqd]蓝奏云下载（密码 762b）[/url]\n\n本模组为玩家自制 Mod，与《植物大战僵尸杂交重制版》官方无隶属关系。\n赞助：微信扫码支持作者（见下方收款码图片）。"
     }
   ],
   "runtimeAssembly": "Runtime/ModAssembly.dll",

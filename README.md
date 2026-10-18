@@ -1,18 +1,18 @@
 # 白卡分类（WhiteCardCategories）v2
 
-> 在选卡界面右侧分类栏「僵尸卡」下方新增「白卡分类」按钮，点开是**二级菜单**：
-> 第一级 **5 大类**（攻击 / 生产 / 职能 / 系列 / 属性），第二级是该大类下的**具体标签**。
+> **两处落点**：
+> 1. **选卡界面**右侧分类栏「僵尸卡」下方 —— 新增「白卡分类」按钮（y=362）；
+> 2. **图鉴 → 植物图鉴页左上角** —— 同一款官方多卡牌底按钮（位置 44,34）。
+>
+> 点开都是**二级菜单**：第一级 **5 大类**（攻击 / 生产 / 职能 / 系列 / 属性），第二级是该大类下的**具体标签**。
 
 | 项目 | 内容 |
 | --- | --- |
 | Mod ID | `whitecardcategories` |
 | 程序集 | `JTYWhiteCardCategories` → 包内 `Runtime/ModAssembly.dll` |
 | 入口类 | `WhiteCardCategoriesEntry` |
-| 当前版本 | 2.3.0 |
+| 当前版本 | 2.13.0 |
 | 分类 | 工具与前置 |
-
-## 版本历史
-
 
 ## 数据来源：《白卡植物标签表.xlsx》
 
@@ -58,6 +58,38 @@
 * **空标签不显示** —— 表格里有 8 个标签（滚动攻击 / 后向弹道 / 滚动弹道 / 机器 / 花瓶 / 不可穿透 / 仅底座 / 脚本特化）在当前白卡池里 0 命中，菜单里不会出现空分类。所以「攻击」显示 8 而不是 11。
 * **返回按钮放在网格外**（面板顶部的 VBox 里，独占一行）。若放进 `GridContainer`，GridContainer 会按最宽子项把**所有列**一起撑宽 ——「← 显示标签分类」比标签名长得多，会把 4 列都拉宽、标签之间留下大片空白。
 * 每次展开菜单都**回到第一级**；卡池变化（换关卡）时菜单内容自动刷新。
+
+## 植物图鉴页（v2.13 新增）
+
+图鉴植物页的**左上角**（`PlantLayer/Plant` 下，坐标 44,34）挂同一个
+`PacketCategoryButton.tscn`，按钮文字「白卡分类」，点开是同一套标签面板。
+
+**筛选机制与选卡界面完全不同**，因为图鉴没有 `CategoryChoose`：
+
+| | 选卡界面 | 图鉴 |
+| --- | --- | --- |
+| 数据源 | `TowerDefenseBattleFeaturePacketBank.packetBankData` | `Almanac.plantPacketBank`（`XWModContentCatalog.WithPlants` 的**深拷贝副本**） |
+| 切换方式 | 写 `category["WCC_<标签>"]` 后调 `packetBankData.CategoryChoose(键)` | 把**当前页那个 category 键的数组**临时换成「原数组 ∩ 标签集合」，再调 `Almanac.InitPlant()` |
+| `plantCategoryId` | —— | **完全不动** ⇒ 上一页/下一页/页数/收藏排序语义不变 |
+| 取消 | 再点别的分类 | 面板里的「✕ 取消筛选」，或直接翻页（自动还原） |
+
+* `InitPlant()` 是 `public` 的，只读 `plantPacketBank.category[plantCategoryId]` ⇒
+  换掉那个键的内容 = 官方支持的筛选入口，**不用反射、不用 Harmony**。
+* 筛选只在**当前页**生效；本页没有该标签的植物时，会自动跳到「含该标签最多」的那一页。
+* 连点不同标签不会层层收窄 —— 每次筛选前先还原上一次的临时替换，永远基于**原始页**求交集。
+* 翻页（`plantCategoryId` 变化）⇒ 自动撤销临时替换，回到正常浏览。
+
+## 两个显示开关（v2.13 新增）
+
+选项 → Mod 管理 → 白卡分类 → 配置 → **显示** 分组：
+
+| 设置键 | 默认 | 作用 |
+| --- | --- | --- |
+| `showInBattleSelect` | 开 | 战斗前选卡界面（含自制关卡编辑卡牌库）是否显示「白卡分类」按钮 |
+| `showInAlmanac` | 开 | 植物图鉴页是否显示「白卡分类」按钮 |
+
+`applyMode: immediate`，改完立刻生效 —— 关闭时是**隐藏已有按钮**（不是只在创建时跳过），
+所以战斗中/图鉴打开着时改也会立即消失。
 
 ## 字号选择（第一级底部）
 
@@ -178,6 +210,19 @@ python build_mod.py --install
 
 **自制关卡的编辑卡牌库**（`LevelEditorPacketBank`）同样支持，代码完全共用。
 
+**图鉴植物页**（v2.13）走的是另一条路：`Almanac.plantPacketBank` 是
+`XWModContentCatalog.WithPlants()` 深拷贝出来的**私有副本**，图鉴没有 `CategoryChoose`。
+本 Mod 的做法是把**当前页那个 category 键**的数组临时替换成筛选结果，再调 `Almanac.InitPlant()` ——
+`InitPlant()` 是公开方法且只读 `plantPacketBank.category[plantCategoryId]`，
+所以换数组内容就是官方支持的筛选入口，`plantCategoryId` 一动不动（翻页/页数/排序语义全保持）。
+详见上文「植物图鉴页」一节。
+
+图鉴实例每次打开都是**新对象**（`DialogManager.DialogCreate` 现造现挂、关闭 `QueueFree`），
+所以按实例 ID 判活：`_tree.Root.FindChild("Almanac", true, false)` 限频扫描（每 5 帧一次），
+换实例就清缓存重建按钮。⚠️ 图鉴在**主菜单/暂停菜单**也能开（`MainMenu.AlmanacButtonPressed`），
+那时 `TowerDefenseManager.Instance` 可能是 null ⇒ 图鉴分支必须写在 `OnFrame` 的
+`TowerDefenseManager` 早退守卫**之前**。
+
 ## 已知坑
 
 1. **`PacketCategoryButton` 没有 `Pressed`** —— 点击链是
@@ -199,13 +244,14 @@ private static readonly bool EnableLog = false;   // 置 true 重新构建即可
 
 会打出「已注入白卡标签：N 大类 / M 个非空标签 / X 张白卡（其中表外自动识别 Y 张）；兜底「其他」Z 张」。
 
+## 变更记录
+
+* **v2.13.0** —— 图鉴植物页左上角新增同款「白卡分类」按钮 + 标签筛选；新增
+  `showInBattleSelect` / `showInAlmanac` 两个显示开关。
+* v2.12.3 —— 修「点标签后是空池」：标签桶改为**点击时**按烘焙表现算，而不是注入阶段预写。
+* v2.3.0 —— 表格标签体系（5 大类 / 71 标签 / 188 株）、二级菜单、字号选择。
+
 ## 历史文件
 
 * `分类清单-白卡最终.json`、`方案报告-白卡分类.md` —— **v1 的单层 23 类别方案**，
   v2 已改为表格标签体系，这两个文件仅作存档，与当前实现无关。
-
-## 更新记录
-
-| 版本 | 变更 |
-| --- | --- |
-| **2.12.3** | **修复「点非章节标签出现空池」**（手机实测：章节能用、其他标签点了是空的）：章节点击是**在点击那一刻**把该章植物列表写进 `packetBankData.category`，而标签点击原先只依赖**注入阶段**预写的键 —— 注入时只保留「本关卡池里真实存在的白卡」，某标签若在本关卡池里为空，该键会被整条跳过 ⇒ 点击时 `CategoryChoose` 查不到键 ⇒ 卡池被清空。现在标签点击与章节一致：**点击时按烘焙表现写**该标签的植物列表。 |

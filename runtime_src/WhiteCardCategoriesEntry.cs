@@ -69,6 +69,19 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 		private bool _defaultApplied;
 		private int _lastFollowFont = -1;
 
+	/// <summary>★ v2.13：两个「是否显示分类按钮」开关（mod.json → 配置页）。</summary>
+	private const string KShowBattle = "showInBattleSelect";
+	private const string KShowAlmanac = "showInAlmanac";
+	private bool _showBattle = true;      // 战斗前选卡界面（含自制关卡编辑器的卡牌库）
+	private bool _showAlmanac = true;     // 植物图鉴页
+
+	/// <summary>图鉴「白卡分类」按钮的位置（PlantLayer/Plant 左上角）。</summary>
+	private const float AlmanacButtonLeft = 44f;
+	private const float AlmanacButtonTop = 34f;    // 卡面素材自身向上溢出约 30px，取 34 才不会被屏幕顶边裁掉
+
+	/// <summary>当前打开的图鉴实例（每次打开都是新节点，关闭即 QueueFree）。</summary>
+	private Almanac _almanacNode;
+
 	/// <summary>「白卡分类」按钮在 CardSort 下的位置（与 CardZombie 同列，向下 75px）。</summary>
 	private const float ButtonOffsetLeft = 133f;
 	private const float ButtonOffsetTop = 362f;
@@ -154,12 +167,45 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			ApplySettings(_context, out _fontSize);
 			ReadFollowFontSetting(_context);
 			ReadDefaultCategorySetting(_context);
+			ReadShowSwitches(_context);
+			try { ApplyShowSwitches(); } catch { }
 			Log("配置已更新，已重读（_defaultCat=" + (_defaultCat == "" ? "不分类" : _defaultCat) + "，字号=" + _fontSize + "）。");
 		}
 		catch { }
 	}
 
-public void Initialize(XWModRuntimeContext context)
+	/// <summary>★ v2.13：读两个「是否显示分类按钮」开关（bool，默认都开）。</summary>
+	private void ReadShowSwitches(XWModRuntimeContext context)
+	{
+		try
+		{
+			if (context == null) { return; }
+			_showBattle = ReadBoolSetting(context, KShowBattle, true);
+			_showAlmanac = ReadBoolSetting(context, KShowAlmanac, true);
+		}
+		catch { }
+	}
+
+	/// <summary>从 Mod 配置里取一个 bool（兼容 bool / string / JsonElement 三种存法）。</summary>
+	private static bool ReadBoolSetting(XWModRuntimeContext context, string key, bool def)
+	{
+		try
+		{
+			if (context == null) { return def; }
+			object v = context.Settings.Get<object>(key);
+			if (v is bool b) { return b; }
+			if (v is string s && bool.TryParse(s, out bool sb)) { return sb; }
+			if (v is System.Text.Json.JsonElement je
+				&& (je.ValueKind == System.Text.Json.JsonValueKind.True || je.ValueKind == System.Text.Json.JsonValueKind.False))
+			{
+				return je.GetBoolean();
+			}
+		}
+		catch { }
+		return def;
+	}
+
+	public void Initialize(XWModRuntimeContext context)
 	{
 			try { SponsorQrRoot = context.PackageRoot; } catch { }
 			EnableLog = false;   // ★ 2026-10-14 用户要求：默认关闭所有日志（原：EnableLog = ReadLogSetting(context)）
@@ -168,6 +214,7 @@ public void Initialize(XWModRuntimeContext context)
 			ApplySettings(context, out _fontSize);   // 面板里的默认字号覆盖配置文件的初值
 			ReadFollowFontSetting(context);   // 是否跟随分类页字号
 			ReadDefaultCategorySetting(context);   // 默认显示的分类
+			ReadShowSwitches(context);   // ★ v2.13：两个显示开关
 			// ★ v2.9.5：订阅配置变化（此前从未订阅 ⇒ 改配置后要重启才生效）
 			try
 			{
@@ -306,6 +353,10 @@ public void Initialize(XWModRuntimeContext context)
 			}
 			_frame++;
 
+			// ★ v2.13：植物图鉴页。必须放在下面 `TowerDefenseManager.Instance` 判空**之前** ——
+			//   图鉴在主菜单 / 暂停菜单里也能打开，那时没有战斗，TowerDefenseManager 可能为空。
+			try { TickAlmanac(); } catch { }
+
 			TowerDefenseManager mgr = TowerDefenseManager.Instance;
 			if (mgr == null || !GodotObject.IsInstanceValid(mgr))
 			{
@@ -350,7 +401,13 @@ public void Initialize(XWModRuntimeContext context)
 				_game.DataId = 0;
 				_defaultApplied = false;   // 换关卡 ⇒ 允许重新应用默认分类
 			}
-			if (EnsureButton(_game, sort, "白卡分类", manualPos: true) != null)
+			if (!_showBattle)
+			{
+				// ★ v2.13：开关关着 ⇒ 不建按钮；已建的藏起来（配置热更新立即生效）
+				ApplyOneSwitch(_game, false);
+				ApplyOneSwitch(_editor, false);
+			}
+			else if (EnsureButton(_game, sort, "白卡分类", manualPos: true) != null)
 			{
 				EnsureDropdown(_game, sort);
 				ApplyDefaultCategory(_game);   // 默认分类（一次性）
@@ -378,7 +435,11 @@ public void Initialize(XWModRuntimeContext context)
 					catch { }
 				};
 				Node vb = eb.GetNodeOrNull("VBoxContainer");
-				if (vb != null && EnsureButton(_editor, vb, "白卡分类", manualPos: false) != null)
+				if (!_showBattle)
+				{
+					ApplyOneSwitch(_editor, false);
+				}
+				else if (vb != null && EnsureButton(_editor, vb, "白卡分类", manualPos: false) != null)
 				{
 					EnsureDropdown(_editor, eb);
 					ApplyDefaultCategory(_editor);
@@ -434,9 +495,10 @@ public void Initialize(XWModRuntimeContext context)
 			{
 				return;
 			}
-			if (t.DataId == pb.GetInstanceId() && t.GroupTags != null && t.GroupTags.Count > 0)
+			if (t.DataId == pb.GetInstanceId() && t.GroupTags != null && t.GroupTags.Count > 0
+				&& string.Equals(t.InjectedCat, _defaultCat, StringComparison.Ordinal))
 			{
-				return;      // 这份卡池数据已经注入过
+				return;      // 这份卡池数据 + 当前分类模式都已注入过
 			}
 			// ★ v2.9.2：「不分类」模式 ⇒ 不注入 pb.category（原生下拉不残留），
 			//   但 **GroupTags 照常构建**（本 Mod 面板的「一页全部标签」需要它）。
@@ -471,6 +533,7 @@ public void Initialize(XWModRuntimeContext context)
 				EnsureBaked();
 				BuildGroupTags(whiteSetEarly, t);
 				t.DataId = pb.GetInstanceId();
+				t.InjectedCat = _defaultCat;
 				return;
 			}
 			Godot.Collections.Array white = pb.category.ContainsKey("White")
@@ -601,6 +664,7 @@ public void Initialize(XWModRuntimeContext context)
 	t.GroupTags = groupTags;
 	t.OtherCount = otherCount;
 	t.DataId = pb.GetInstanceId();
+		t.InjectedCat = _defaultCat;
 	RebuildDropdown(t);      // 卡池变了 ⇒ 菜单内容跟着刷新（回到第一级）
 
 	Log("已注入白卡标签：" + groupTags.Count + " 大类 / " + shown + " 个非空标签 / "
@@ -685,6 +749,10 @@ public void Initialize(XWModRuntimeContext context)
 	private sealed class Target
 	{
 		public ulong DataId;                            // 已注入的那份卡池数据（实例 ID）
+		/// <summary>★ v2.12.2：注入时所用的分类模式（_defaultCat）。模式变了必须重新注入 ——
+		/// 否则「不分类」跑过一次后切回普通分类时，守卫会因 DataId 相同而跳过，
+		/// 导致 pb.category 永远没有 WCC_ 键、点标签查不到 ⇒ 不出植物。</summary>
+		public string InjectedCat;
 		public Dictionary<string, List<string>> GroupTags;  // 大类 → 非空标签（空大类不放）
 		public int OtherCount;                           // 「其他」里的卡数
 		public PacketCategoryButton Button;              // 「白卡分类」按钮
@@ -693,10 +761,26 @@ public void Initialize(XWModRuntimeContext context)
 		public int PlaceFrames;                          // 还需重贴几帧（容器最小尺寸是延迟算的）
 		public Action<string> Choose;                    // 点标签后的切换回调
 		public PacketCategoryButton.ChooseEventHandler ChooseHandler;  // ★ v2.8：固定桥接委托（订阅一次永不移除）
+		// ── ★ v2.13：仅「图鉴」用 —— 图鉴没有 CategoryChoose，改成本地过滤 ──
+		public Almanac AlmanacNode;                    // 所属图鉴实例
+		public HashSet<string> AlmanacFilter;          // null = 不筛选；非 null = 只显示集合内的植物键
 	}
 
 	private readonly Target _game = new Target();     // 游戏内选卡界面
 	private readonly Target _editor = new Target();   // 自制关卡的编辑卡牌库
+	private readonly Target _almanac = new Target();  // ★ v2.13：植物图鉴页
+
+	// ── ★ v2.13：图鉴筛选的临时状态 ──
+	//   做法：**不动** `Almanac.plantCategoryId`（翻页语义 / 页数完全不变），
+	//   只把「当前页」那个 category 键的数组临时换成筛选结果；
+	//   取消筛选或翻页时把原数组写回去。
+	//   为什么不去改 `_plantLogicalConfigs`（图鉴真正的数据源）：那是 private，
+	//   而 `InitPlant()` 就是从 `plantPacketBank.category[plantCategoryId]` 重算它的
+	//   ⇒ 换掉那个键的内容 = 官方认可的入口，不用反射、不用 Harmony。
+	private bool _almanacFilterActive;
+	private Variant _almanacFilterKey;                    // 被临时替换的 category 键
+	private Godot.Collections.Array _almanacFilterBackup; // 该键原本的数组
+	private int _almanacLastCatId = -1;                   // 上一帧的 plantCategoryId（翻页检测）
 
 	/// <summary>
 	/// 确保「白卡分类」按钮存在（实例化游戏官方按钮场景，外观与其它分类按钮一致）。
@@ -1160,6 +1244,11 @@ public void Initialize(XWModRuntimeContext context)
 			{
 				items.Add(("其他（" + t.OtherCount + "）", () => OnCategoryClicked(t, "其他")));
 			}
+			// ★ v2.13：图鉴侧正在筛选 ⇒ 给一个明确的「取消筛选」出口
+			if (ReferenceEquals(t, _almanac) && _almanacFilterActive)
+			{
+				items.Add(("✕ 取消筛选", () => ClearAlmanacFilter(t)));
+			}
 			// ★ v2.10：第一级加「按获取关卡」入口（二级列出关卡，点关卡筛该关解锁的白卡）
 			items.Add(("按获取关卡", () => ShowLevelSourcePage(t)));
 			FillGrid(grid, items, cols: 2);
@@ -1236,6 +1325,12 @@ public void Initialize(XWModRuntimeContext context)
 	{
 		try
 		{
+			// ★ v2.13：图鉴侧走本地筛选，不写战斗卡池
+			if (ReferenceEquals(t, _almanac))
+			{
+				FilterAlmanacPage(t, new HashSet<string>(plantKeys ?? new List<string>()), "章节-其他");
+				return;
+			}
 			string key = KeyPrefix + "Chapter_Other";
 			TowerDefenseManager mgr = TowerDefenseManager.Instance;
 			TowerDefensePacketBankData pb = mgr?.GetPacketBankFeature()?.packetBankData;
@@ -1260,6 +1355,12 @@ public void Initialize(XWModRuntimeContext context)
 	{
 		try
 		{
+			// ★ v2.13：图鉴侧走本地筛选，不写战斗卡池
+			if (ReferenceEquals(t, _almanac))
+			{
+				FilterAlmanacPage(t, new HashSet<string>(plantKeys ?? new List<string>()), "第" + chapter + "章");
+				return;
+			}
 			string key = KeyPrefix + "Chapter_" + chapter;
 			// pb 与 _game 同源：TowerDefenseManager.GetPacketBankFeature().packetBankData（Resource，非 Node）
 			TowerDefenseManager mgr = TowerDefenseManager.Instance;
@@ -1405,6 +1506,11 @@ public void Initialize(XWModRuntimeContext context)
 			}
 			SetBack(t, "← 显示标签分类", () => RebuildDropdown(t));
 			var items = new List<(string Text, Action Act)>();
+			// ★ v2.13：图鉴侧正在筛选 ⇒ 首选项给「取消筛选」
+			if (ReferenceEquals(t, _almanac) && _almanacFilterActive)
+			{
+				items.Add(("✕ 取消筛选", () => ClearAlmanacFilter(t)));
+			}
 			foreach (string grp in WhiteCardCategoriesTable.GroupOrder)
 			{
 				if (!t.GroupTags.TryGetValue(grp, out List<string> tags) || tags.Count == 0)
@@ -1597,10 +1703,44 @@ public void Initialize(XWModRuntimeContext context)
 	{
 		try
 		{
+			// ★ v2.13：图鉴没有 CategoryChoose ⇒ 走本地筛选（只作用于当前图鉴页）
+			if (ReferenceEquals(t, _almanac))
+			{
+				FilterAlmanacPage(t, BakeKeysWithTag(cat), cat);
+				return;
+			}
 			if (t.Dropdown != null && GodotObject.IsInstanceValid(t.Dropdown))
 			{
 				t.Dropdown.Visible = false;
 			}
+			// ★ v2.12.3（用户实测：章节能用、标签点了是空池）：
+			//   与 `OnChapterClicked` 保持一致 —— **点击时**按烘焙表把该标签的植物列表写进
+			//   `pb.category`。原因：注入时那份只保留「当前卡池里真实存在的白卡」，
+			//   若某个标签在本关卡池里恰好为空（或烘焙表与设备侧卡池不同步），
+			//   注入阶段会因 `Count > 0` 判定而**跳过**该键 ⇒ 点击时 CategoryChoose 查不到键 ⇒ 卡池被清空。
+			//   章节正是因为"点击时现写"才一直能用 ✓
+			try
+			{
+				TowerDefensePacketBankData pb = TowerDefenseManager.Instance?.GetPacketBankFeature()?.packetBankData;
+				if (pb != null && GodotObject.IsInstanceValid(pb))
+				{
+					EnsureBaked();
+					var arr = new Godot.Collections.Array();
+					foreach (KeyValuePair<string, string[]> kv in _baked)
+					{
+						foreach (string tg in kv.Value)
+						{
+							if (string.Equals(tg, cat, StringComparison.Ordinal)) { arr.Add(kv.Key); break; }
+						}
+					}
+					if (arr.Count > 0)
+					{
+						pb.category[KeyPrefix + cat] = arr;
+						Log("已按烘焙表写入标签「" + cat + "」的 " + arr.Count + " 株植物。");
+					}
+				}
+			}
+			catch { }
 			if (t.Choose != null)
 			{
 				t.Choose(KeyPrefix + cat);
@@ -1615,6 +1755,419 @@ public void Initialize(XWModRuntimeContext context)
 				Log("切换标签异常（本条只报一次）：" + ex.Message);
 			}
 		}
+	}
+
+	// ====================================================== 显示开关（★ v2.13）
+	//
+	// 两个配置开关（mod.json → 配置页）：
+	//   showInBattleSelect = 战斗前选卡界面（含自制关卡编辑器卡牌库）是否显示按钮
+	//   showInAlmanac      = 植物图鉴页是否显示按钮
+	// 改配置后由 `Settings.Changed` → `OnWccSettingsChanged` → `ApplyShowSwitches()` 立即生效；
+	// 建按钮的地方（OnFrame / TickAlmanac）另外用开关做前置判断，避免"关着也建出来再藏"。
+
+	/// <summary>按两个开关显示 / 隐藏三处「白卡分类」按钮。</summary>
+	private void ApplyShowSwitches()
+	{
+		try
+		{
+			ApplyOneSwitch(_game, _showBattle);
+			ApplyOneSwitch(_editor, _showBattle);
+			ApplyOneSwitch(_almanac, _showAlmanac);
+			Log("显示开关已应用（选卡=" + _showBattle + "，图鉴=" + _showAlmanac + "）。");
+		}
+		catch { }
+	}
+
+	/// <summary>显示 / 隐藏单个目标上的按钮；关掉时顺手把下拉面板收起。</summary>
+	private static void ApplyOneSwitch(Target t, bool show)
+	{
+		try
+		{
+			if (t == null)
+			{
+				return;
+			}
+			if (t.Button != null && GodotObject.IsInstanceValid(t.Button))
+			{
+				t.Button.Visible = show;
+			}
+			if (!show && t.Dropdown != null && GodotObject.IsInstanceValid(t.Dropdown))
+			{
+				t.Dropdown.Visible = false;
+			}
+		}
+		catch { }
+	}
+
+	// ======================================================== 植物图鉴（★ v2.13）
+	//
+	// 图鉴节点：`Almanac`（DialogBoxBase，无命名空间，public）由 `DialogManager.DialogCreate("Almanac")`
+	// 挂在 `%DialogLayer` 下；**每次打开都是新实例，关闭即 QueueFree**。
+	// 植物页结构：PlantLayer(CanvasLayer, layer=51) / Plant(Control 全屏) /
+	//   { TextureRect, TitleLabel, PacketScroll, IndexButton(左下), PlantPreButton, PlantNextButton,
+	//     ShowButton(右下), PlantInformationPanel }  —— 左上角是空的，按钮就放那儿。
+	//
+	// 图鉴没有 `CategoryChoose`（那是 TowerDefenseBattleFeaturePacketBank 的方法），
+	// 所以不能沿用"写 pb.category + CategoryChoose"那套。但 `Almanac.InitPlant()`
+	// 是**公开**的、且它的数据源就是 `plantPacketBank.category[plantCategoryId]`
+	// ⇒ 只要把当前页那个键的数组临时换成筛选结果，再调一次 `InitPlant()`，
+	//    图鉴就按筛选结果重建卡片列表；`plantCategoryId` 一动不动，
+	//    上一页 / 下一页 / 页数 / 收藏排序等语义全部保持原样。
+
+	/// <summary>图鉴实例查找（缓存优先；没有缓存时限频全树扫描，避免每帧 FindChild）。</summary>
+	private Almanac ResolveAlmanac()
+	{
+		try
+		{
+			if (_almanacNode != null && GodotObject.IsInstanceValid(_almanacNode) && _almanacNode.IsInsideTree())
+			{
+				return _almanacNode;
+			}
+			if (_tree == null || !GodotObject.IsInstanceValid(_tree.Root))
+			{
+				return null;
+			}
+			if ((_frame % 5) != 0)
+			{
+				return null;      // 约 80ms 探一次，够快也不浪费
+			}
+			Node found = _tree.Root.FindChild("Almanac", true, false);
+			if (found is Almanac am && GodotObject.IsInstanceValid(am))
+			{
+				return am;
+			}
+		}
+		catch { }
+		return null;
+	}
+
+	/// <summary>清理图鉴侧的缓存引用（对话框关闭 / 换成新实例时调）。</summary>
+	private void ResetAlmanacState()
+	{
+		try { RestoreAlmanacFilter(); } catch { }
+		_almanacNode = null;
+		_almanac.Button = null;
+		_almanac.Dropdown = null;
+		_almanac.Parent = null;
+		_almanac.DataId = 0;
+		_almanac.GroupTags = null;
+		_almanac.OtherCount = 0;
+		_almanac.Choose = null;
+		_almanac.ChooseHandler = null;
+		_almanac.AlmanacNode = null;
+		_almanac.AlmanacFilter = null;
+		_almanacLastCatId = -1;
+	}
+
+	/// <summary>每帧驱动图鉴侧：找实例 → 左上角挂按钮 → 建下拉 → 翻页时撤销筛选。</summary>
+	private void TickAlmanac()
+	{
+		try
+		{
+			Almanac a = ResolveAlmanac();
+			if (a == null)
+			{
+				if (_almanacNode != null || _almanac.Button != null || _almanac.Dropdown != null)
+				{
+					ResetAlmanacState();          // 图鉴关了：面板随对话框一起没了，清引用即可
+				}
+				return;
+			}
+			if (!ReferenceEquals(a, _almanacNode))
+			{
+				ResetAlmanacState();
+				_almanacNode = a;
+				_almanac.AlmanacNode = a;
+				_almanacLastCatId = a.plantCategoryId;
+				Log("已接上图鉴实例（plantCategoryId=" + a.plantCategoryId + "）。");
+			}
+
+			if (!_showAlmanac)
+			{
+				ApplyOneSwitch(_almanac, false);
+				return;                        // 开关关着：不建按钮
+			}
+
+			Control plantRoot = a.GetNodeOrNull<Control>("PlantLayer/Plant");
+			if (plantRoot == null || !GodotObject.IsInstanceValid(plantRoot))
+			{
+				return;
+			}
+
+			PacketCategoryButton btn = EnsureButton(_almanac, plantRoot, "白卡分类", manualPos: true);
+			if (btn == null)
+			{
+				return;
+			}
+			// 选卡界面那份用的是 CardSort 下的坐标（133,362）；图鉴这边覆盖到**左上角**。
+			btn.Position = new Vector2(AlmanacButtonLeft, AlmanacButtonTop);
+			btn.Visible = true;
+			SetLightMaskRecursive(btn, 0);   // 图鉴里 Plant 整棵树的 light_mask 都是 0，保持一致
+
+			// 图鉴不走 InjectIntoTarget（那会写战斗卡池），标签列表直接从它自己的白卡副本建一次
+			if (_almanac.GroupTags == null || _almanac.GroupTags.Count == 0)
+			{
+				BuildGroupTagsForAlmanac(a);
+			}
+
+			EnsureDropdown(_almanac, plantRoot);
+			FlushRePlace(_almanac);
+
+			// 上一页 / 下一页 ⇒ 先撤销上一次的临时替换。
+			// 只还原**旧键**，当前页用的是它自己的原始数组，所以不需要再跑一次 InitPlant。
+			if (_almanacLastCatId != a.plantCategoryId)
+			{
+				_almanacLastCatId = a.plantCategoryId;
+				RestoreAlmanacFilter();
+			}
+		}
+		catch { }
+	}
+
+	/// <summary>用图鉴自己那份卡池里的 "White" 数组建标签索引（不碰战斗卡池）。</summary>
+	private void BuildGroupTagsForAlmanac(Almanac a)
+	{
+		try
+		{
+			TowerDefensePacketBankData pb = a?.plantPacketBank;
+			if (pb == null || !GodotObject.IsInstanceValid(pb))
+			{
+				return;
+			}
+			var set = new HashSet<string>();
+			if (pb.category.ContainsKey("White"))
+			{
+				Godot.Collections.Array white = pb.category["White"].AsGodotArray();
+				if (white != null)
+				{
+					foreach (Variant v in white)
+					{
+						set.Add(v.AsString());
+					}
+				}
+			}
+			if (set.Count == 0)
+			{
+				return;
+			}
+			EnsureBaked();
+			BuildGroupTags(set, _almanac);
+			Log("图鉴：白卡 " + set.Count + " 株，已建 " + (_almanac.GroupTags?.Count ?? 0) + " 个大类。");
+		}
+		catch { }
+	}
+
+	/// <summary>把一棵子树里所有 CanvasItem 的 light_mask 设成同一个值（图鉴里整棵树都是 0）。</summary>
+	private static void SetLightMaskRecursive(Node node, int mask)
+	{
+		try
+		{
+			if (node == null || !GodotObject.IsInstanceValid(node))
+			{
+				return;
+			}
+			if (node is CanvasItem ci)
+			{
+				ci.LightMask = mask;
+			}
+			foreach (Node child in node.GetChildren())
+			{
+				SetLightMaskRecursive(child, mask);
+			}
+		}
+		catch { }
+	}
+
+	/// <summary>烘焙表里带某个标签的全部植物键集合。</summary>
+	private static HashSet<string> BakeKeysWithTag(string cat)
+	{
+		var set = new HashSet<string>();
+		try
+		{
+			EnsureBaked();
+			foreach (KeyValuePair<string, string[]> kv in _baked)
+			{
+				foreach (string tg in kv.Value)
+				{
+					if (string.Equals(tg, cat, StringComparison.Ordinal))
+					{
+						set.Add(kv.Key);
+						break;
+					}
+				}
+			}
+		}
+		catch { }
+		return set;
+	}
+
+	/// <summary>
+	/// 图鉴筛选核心：把**当前页**那个 category 键的数组临时换成「原数组 ∩ wanted」，
+	/// 再调 `InitPlant()` 让图鉴按新数组重建卡片列表。
+	/// `plantCategoryId` 不动 ⇒ 翻页 / 页数 / 收藏排序语义完全不变。
+	/// </summary>
+	private void FilterAlmanacPage(Target t, ICollection<string> wanted, string label)
+	{
+		try
+		{
+			if (t != null && t.Dropdown != null && GodotObject.IsInstanceValid(t.Dropdown))
+			{
+				t.Dropdown.Visible = false;     // 选完就收面板
+			}
+			Almanac a = _almanacNode;
+			if (a == null || !GodotObject.IsInstanceValid(a))
+			{
+				return;
+			}
+			TowerDefensePacketBankData pb = a.plantPacketBank;
+			if (pb == null || !GodotObject.IsInstanceValid(pb))
+			{
+				return;
+			}
+
+			// 每次都先还原上一次的临时替换 ⇒ 基于「原始页」求交集（连点不同标签不会层层收窄）
+			RestoreAlmanacFilter();
+
+			var keys = new Godot.Collections.Array();
+			foreach (Variant k in pb.category.Keys)
+			{
+				keys.Add(k);
+			}
+			int idx = a.plantCategoryId;
+			if (idx < 0 || idx >= keys.Count)
+			{
+				return;
+			}
+			string curKey = keys[idx].AsString();
+			if (!pb.category.ContainsKey(curKey))
+			{
+				return;
+			}
+			Godot.Collections.Array original = pb.category[curKey].AsGodotArray();
+			if (original == null)
+			{
+				return;
+			}
+
+			var filtered = new Godot.Collections.Array();
+			if (wanted != null)
+			{
+				foreach (Variant v in original)
+				{
+					string k = v.AsString();
+					if (wanted.Contains(k))
+					{
+						filtered.Add(k);
+					}
+				}
+			}
+			if (filtered.Count == 0)
+			{
+				// ★ 本页没有该标签的植物 ⇒ 自动跳到「含有最多该标签植物」的那一页，
+				//   而不是什么都不做（那样用户会以为点了没反应 / 卡丢了）。
+				int bestIdx = -1;
+				int bestCount = 0;
+				Godot.Collections.Array bestArr = null;
+				for (int i = 0; i < keys.Count; i++)
+				{
+					string k2 = keys[i].AsString();
+					if (!pb.category.ContainsKey(k2)) { continue; }
+					Godot.Collections.Array arr2 = pb.category[k2].AsGodotArray();
+					if (arr2 == null) { continue; }
+					int hit = 0;
+					foreach (Variant v2 in arr2)
+					{
+						if (wanted != null && wanted.Contains(v2.AsString())) { hit++; }
+					}
+					if (hit > bestCount)
+					{
+						bestCount = hit;
+						bestIdx = i;
+						bestArr = arr2;
+						curKey = k2;
+						original = arr2;
+					}
+				}
+				if (bestIdx < 0 || bestArr == null || bestCount == 0)
+				{
+					Log("图鉴：标签「" + label + "」在植物图鉴里找不到对应植物。");
+					return;
+				}
+				// 切到那一页（plantCategoryId 变了，TickAlmanac 会看到并保持不清筛选，
+				// 因为我们同步把 _almanacLastCatId 设成了新下标）
+				a.plantCategoryId = idx = bestIdx;
+				filtered = new Godot.Collections.Array();
+				foreach (Variant v3 in bestArr)
+				{
+					string k3 = v3.AsString();
+					if (wanted != null && wanted.Contains(k3)) { filtered.Add(k3); }
+				}
+				Log("图鉴：本页没有「" + label + "」，已自动跳到有 " + filtered.Count + " 株的那一页。");
+			}
+
+			_almanacFilterKey = curKey;
+			_almanacFilterBackup = original.Duplicate();
+			_almanacFilterActive = true;
+			_almanacLastCatId = idx;
+			pb.category[curKey] = filtered;
+			a.InitPlant();
+			Log("图鉴：已筛选「" + label + "」，本页 " + filtered.Count + "/" + original.Count + " 株。");
+		}
+		catch (Exception ex)
+		{
+			if (_diag < 108)
+			{
+				_diag = 108;
+				Log("图鉴筛选异常（本条只报一次）：" + ex.Message);
+			}
+		}
+	}
+
+	/// <summary>把被临时替换的 category 键写回原数组。</summary>
+	private void RestoreAlmanacFilter()
+	{
+		if (!_almanacFilterActive)
+		{
+			return;
+		}
+		_almanacFilterActive = false;
+		try
+		{
+			Almanac a = _almanacNode;
+			if (a != null && GodotObject.IsInstanceValid(a)
+				&& _almanacFilterBackup != null
+				&& _almanacFilterKey.VariantType == Variant.Type.String)
+			{
+				TowerDefensePacketBankData pb = a.plantPacketBank;
+				if (pb != null && GodotObject.IsInstanceValid(pb))
+				{
+					pb.category[_almanacFilterKey] = _almanacFilterBackup;
+				}
+			}
+		}
+		catch { }
+		_almanacFilterBackup = null;
+		_almanacFilterKey = default;
+	}
+
+	/// <summary>图鉴侧的「取消筛选」：还原本页原数组 + 让图鉴重建。</summary>
+	private void ClearAlmanacFilter(Target t)
+	{
+		try
+		{
+			if (t != null && t.Dropdown != null && GodotObject.IsInstanceValid(t.Dropdown))
+			{
+				t.Dropdown.Visible = false;
+			}
+			RestoreAlmanacFilter();
+			Almanac a = _almanacNode;
+			if (a != null && GodotObject.IsInstanceValid(a))
+			{
+				a.InitPlant();
+			}
+			Log("图鉴：已取消筛选。");
+		}
+		catch { }
 	}
 
 	private void Log(string msg)
