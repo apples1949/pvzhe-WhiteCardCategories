@@ -4,7 +4,7 @@
 //         ② 游戏解包数据，用于补齐 xlsx 之后新版本新增的白卡（按图鉴获取方式，
 //            缺失时回退 packet 的 levelSaveKey）。
 //
-// 分组来源（共 198 株）：
+// 分组来源（共 202 株）：
 //   A1     第1章       13 株
 //   A2     第2章       13 株
 //   A3     第3章       13 株
@@ -15,7 +15,7 @@
 //   A8     第8章       18 株
 //   A9     第9章       18 株
 //   A10    第10章      18 株
-//   HY     杂交乐园       3 株
+//   HY     杂交乐园       7 株
 //   ON     在线关卡      42 株
 //   SH     商店购买       1 株
 //   LT     抽奖盒子       1 株
@@ -235,16 +235,20 @@ internal static class WhiteCardChapterSources
 		"PlantSealeaf|HY",  // 海叶伞
 		"PlantGarlicWood|HY",  // 大蒜火炬树桩
 		"PlantPresentBox|LT",  // 抽奖盒子
-		"PlantCattailMagic|A10",  // 魔法猫尾草
-		"PlantChomperMagic|A10",  // 魔法大嘴花
-		"PlantFumeShroomMagic|A10",  // 魔法大喷菇
-		"PlantIceKelp|A10",  // 寒冰海草
 		"PlantLilyPadMagic|A10",  // 魔法睡莲
-		"PlantMagicStoneNut|A10",  // 魔法石坚果
-		"PlantPumpkinWizard|A10",  // 巫师南瓜
+		"PlantIceKelp|A10",  // 寒冰海草
+		"PlantChomperMagic|A10",  // 魔法大嘴花
+		"PlantTallnutSurf|A10",  // 洋流高坚果
 		"PlantScaredyShroomElf|A10",  // 精灵胆小菇
 		"PlantSeaShroomMagic|A10",  // 魔法海蘑菇
-		"PlantTallnutSurf|A10",  // 洋流高坚果
+		"PlantFumeShroomMagic|A10",  // 魔法大喷菇
+		"PlantCattailMagic|A10",  // 魔法猫尾草
+		"PlantPumpkinWizard|A10",  // 巫师南瓜
+		"PlantMagicStoneNut|A10",  // 魔法石坚果
+		"PlantPlanternCoffee|HY",  // 咖啡路灯花
+		"PlantMagnetPot|HY",  // 磁力花盆
+		"PlantPotatoPumpkin|HY",  // 土豆壳
+		"PlantCoffeePot|HY",  // 咖啡花盆
 	};
 
 	private static Dictionary<string, string> _byKey;

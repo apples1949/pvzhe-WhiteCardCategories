@@ -1619,6 +1619,124 @@
     "辣椒",
     "模仿者"
    ]
+  },
+  "PlantLilyPadMagic": {
+   "name": "魔法睡莲",
+   "tags": [
+    "射击",
+    "花盆",
+    "莲叶",
+    "魔法",
+    "水生"
+   ]
+  },
+  "PlantIceKelp": {
+   "name": "寒冰海草",
+   "tags": [
+    "近战",
+    "缠绕",
+    "冰冻",
+    "冰",
+    "水生"
+   ]
+  },
+  "PlantChomperMagic": {
+   "name": "魔法大嘴花",
+   "tags": [
+    "近战",
+    "魔法"
+   ]
+  },
+  "PlantTallnutSurf": {
+   "name": "洋流高坚果",
+   "tags": [
+    "坚果",
+    "高坚果",
+    "魔法",
+    "冰",
+    "水生"
+   ]
+  },
+  "PlantScaredyShroomElf": {
+   "name": "精灵胆小菇",
+   "tags": [
+    "射击",
+    "胆小",
+    "魔法",
+    "夜行"
+   ]
+  },
+  "PlantSeaShroomMagic": {
+   "name": "魔法海蘑菇",
+   "tags": [
+    "射击",
+    "魔法",
+    "夜行",
+    "水生"
+   ]
+  },
+  "PlantFumeShroomMagic": {
+   "name": "魔法大喷菇",
+   "tags": [
+    "近战",
+    "喷菇",
+    "魔法",
+    "夜行"
+   ]
+  },
+  "PlantCattailMagic": {
+   "name": "魔法猫尾草",
+   "tags": [
+    "猫尾",
+    "穿透",
+    "魔法",
+    "水陆"
+   ]
+  },
+  "PlantPumpkinWizard": {
+   "name": "巫师南瓜",
+   "tags": [
+    "坚果",
+    "魔法"
+   ]
+  },
+  "PlantMagicStoneNut": {
+   "name": "魔法石坚果",
+   "tags": [
+    "坚果",
+    "魔法"
+   ]
+  },
+  "PlantPlanternCoffee": {
+   "name": "咖啡路灯花",
+   "tags": [
+    "灯具",
+    "咖啡豆"
+   ]
+  },
+  "PlantMagnetPot": {
+   "name": "磁力花盆",
+   "tags": [
+    "花盆",
+    "磁力"
+   ]
+  },
+  "PlantPotatoPumpkin": {
+   "name": "土豆壳",
+   "tags": [
+    "近战",
+    "一次性",
+    "成长",
+    "南瓜壳",
+    "坚果"
+   ]
+  },
+  "PlantCoffeePot": {
+   "name": "咖啡花盆",
+   "tags": [
+    "花盆",
+    "咖啡豆"
+   ]
   }
  }
 }

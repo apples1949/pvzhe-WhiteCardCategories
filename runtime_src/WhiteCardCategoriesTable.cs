@@ -3,7 +3,7 @@
 // 数据来源：表格「标签字典」的分组列 + 「白卡植物标签」的标签列。
 //   5 大类 = 攻击 / 生产 / 职能 / 系列 / 属性
 //   （字典里的「备注/脚本特化」命中 0，表格说明已并入「其他」，故不设该大类）
-// 覆盖表格全部 188 株白卡植物、71 个标签。
+// 覆盖表格全部 202 株白卡植物、71 个标签。
 //
 // ⚠️ 本表是「构建期烘焙」。游戏更新/Mod 新增的白卡不在表里 ⇒ Entry 会用
 //    `WhiteCardAutoTagger`（配置字段 + 名称关键词 + 组件集）再兜一轮，
@@ -219,5 +219,19 @@ internal static class WhiteCardCategoriesTable
 		"PlantSealeaf|射击,保护伞,夜行,水生,海兵菇",
 		"PlantGarlicWood|火炬,大蒜,树桩,火",
 		"PlantPresentBox|一次性,辣椒,模仿者",
+		"PlantLilyPadMagic|射击,花盆,莲叶,魔法,水生",
+		"PlantIceKelp|近战,缠绕,冰冻,冰,水生",
+		"PlantChomperMagic|近战,魔法",
+		"PlantTallnutSurf|坚果,高坚果,魔法,冰,水生",
+		"PlantScaredyShroomElf|射击,胆小,魔法,夜行",
+		"PlantSeaShroomMagic|射击,魔法,夜行,水生",
+		"PlantFumeShroomMagic|近战,喷菇,魔法,夜行",
+		"PlantCattailMagic|猫尾,穿透,魔法,水陆",
+		"PlantPumpkinWizard|坚果,魔法",
+		"PlantMagicStoneNut|坚果,魔法",
+		"PlantPlanternCoffee|灯具,咖啡豆",
+		"PlantMagnetPot|花盆,磁力",
+		"PlantPotatoPumpkin|近战,一次性,成长,南瓜壳,坚果",
+		"PlantCoffeePot|花盆,咖啡豆",
 	};
 }

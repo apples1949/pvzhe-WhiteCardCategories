@@ -15,7 +15,7 @@ using PVZHE.ModEditor.ModSystem;
 ///     表格说明已并入「其他」，故不设该大类）
 ///   · 「白卡植物标签」表的**标签列** → 每株植物的标签
 /// 构建期由 `gen_whitecard_table.py` 烘焙进
-/// <see cref="WhiteCardCategoriesTable"/>（188 株 / 71 标签 / 5 大类）。
+/// <see cref="WhiteCardCategoriesTable"/>（202 株 / 71 标签 / 5 大类，0.31.0）。
 ///
 /// ── 自动识别（为新版本 / 其它 Mod 的白卡兜底）──────────────────────
 /// 烘焙表只覆盖制表时的白卡；**游戏更新或 Mod 新增的卡不在表里** ⇒
@@ -574,7 +574,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 					// ★ 只对**表外**的卡跑自动识别（游戏更新 / 其它 Mod 新增的白卡）。
 					//   为什么不对全部卡跑：自动识别要加载该角色的**组件集资源**，
 					//   188 张卡全跑一遍会在进选卡界面时集中做 188 次资源加载 ⇒ 明显卡顿；
-					//   而烘焙表本来就是这 188 株的权威快照，再跑一遍是白做功。
+					//   而烘焙表本来就是这 202 株的权威快照，再跑一遍是白做功。
 					//   （若游戏更新改了**已有**卡的标签，请重新导出表格并重生成
 					//     `WhiteCardCategoriesTable.cs`，而不是依赖这里的兜底。）
 					try
@@ -1262,7 +1262,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 
 
 	/// <summary>★ v2.14：「按获取章节」二级页——按【获取方式】分组（xlsx 图鉴说明），点分组筛该组白卡。
-	/// 分组清单由 <see cref="WhiteCardChapterSources.ChapterGroupLines"/> 决定（15 组，188 株全覆盖，
+	/// 分组清单由 <see cref="WhiteCardChapterSources.ChapterGroupLines"/> 决定（15 组，202 株全覆盖，
 	/// 不再有「其他」兜底）。</summary>
 	private void ShowLevelSourcePage(Target t)
 	{
@@ -1275,7 +1275,7 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				return;
 			}
 			SetBack(t, "← 返回", () => RebuildDropdown(t));
-			// ★ v2.14：按 xlsx「获取方式」的新章节清单分组（15 组，188 株全部有归属）
+			// ★ v2.14：按 xlsx「获取方式」的新章节清单分组（15 组，202 株全部有归属）
 			var byGroup = new Dictionary<string, List<string>>();
 			foreach (string line in WhiteCardChapterSources.PlantChapterLines)
 			{

@@ -2,7 +2,7 @@
 """生成 WhiteCardChapterSources.cs：白卡 → 章节（来源分组）映射。
 
 数据源（两路合并）：
-  1) **xlsx** `白卡植物标签表.xlsx` 的「图鉴说明」列「获取方式」文本 —— 188 株，权威。
+  1) **xlsx** `白卡植物标签表.xlsx` 的「图鉴说明」列「获取方式」文本 —— 202 株，权威。
   2) **游戏解包** `unpack/` —— 用于补齐 xlsx 之后新版本新增的白卡：
      - 白卡名单：`Asset/Config/PacketBank/PacketBankResource.json` → GeneralPlant.Category.White
      - 章节依据：优先用 `Translate.zh.translation` 图鉴条目的「获取方式」文本（与 xlsx 同口径），
@@ -115,7 +115,7 @@ def load_universe():
                 meta[mk.group(1)] = (cn, ml.group(1) if ml else "")
 
     if white:
-        seq = list(white)                      # 白卡名单 = 唯一口径（198 株）
+        seq = list(white)                      # 白卡名单 = 唯一口径（202 株，0.31.0）
     else:
         seq = list(meta.keys())                # 极端兜底：读不到 PacketBankResource.json 时才用全部 packet
     out = OrderedDict()
