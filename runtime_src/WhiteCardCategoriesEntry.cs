@@ -141,21 +141,28 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 
 
 	/// <summary>按「Mod 配置」刷新默认字号（Initialize 与 Changed 都调）。</summary>
-	private static void ApplySettings(XWModRuntimeContext context, out int fontSize)
+	/// <returns>
+	/// true = 宿主配置给出了**合法**字号（16~26 偶数）⇒ 调用方**不得**再用 user:// cfg 覆盖它。
+	/// ★ v2.16.0（用户反馈「战斗设置页里的设置不保存，重进关卡变回配置页的值」）：
+	///   此前 Initialize 的顺序是「先宿主配置 → 再 LoadConfig() 用 cfg 覆盖」，
+	///   而面板里点字号又只写 cfg ⇒ 两边永远对打。现在改成**宿主配置优先、cfg 只兜底**。
+	/// </returns>
+	private static bool ApplySettings(XWModRuntimeContext context, out int fontSize)
 	{
 		fontSize = 18;
 		try
 		{
-			if (context == null) { return; }
+			if (context == null) { return false; }
 			object v = context.Settings.Get<object>("defaultFontSize");
 			int n = 0;
 			if (v is string s) { int.TryParse(s, out n); }
 			else if (v is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.String)
 			{ int.TryParse(je.GetString(), out n); }
 			else { try { n = System.Convert.ToInt32(v); } catch { n = 0; } }
-			if (n >= 16 && n <= 26 && (n % 2) == 0) { fontSize = n; }
+			if (n >= 16 && n <= 26 && (n % 2) == 0) { fontSize = n; return IsValidFontSize(n); }
 		}
 		catch { }
+		return false;
 	}
 
 	/// <summary>★ v2.9.5：订阅标志。</summary>
@@ -167,7 +174,8 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	{
 		try
 		{
-			ApplySettings(_context, out _fontSize);
+			// ★ v2.16.0：宿主配置优先；只有宿主配置读不出合法值时才用 user:// cfg 兜底
+			if (!ApplySettings(_context, out _fontSize)) { LoadConfig(); }
 			ReadFollowFontSetting(_context);
 			ReadDefaultCategorySetting(_context);
 			ReadShowSwitches(_context);
@@ -214,7 +222,12 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			EnableLog = false;   // ★ 2026-10-14 用户要求：默认关闭所有日志（原：EnableLog = ReadLogSetting(context)）
 
 			_context = context;
-			ApplySettings(context, out _fontSize);   // 面板里的默认字号覆盖配置文件的初值
+			// ★ v2.16.0：顺序改为「**宿主配置优先**」—— 宿主给出合法字号就绝不再被 cfg 覆盖，
+			//   否则面板里刚点过的字号会被 cfg 或默认值打回去（= 用户报的「设置不保存」）。
+			if (!ApplySettings(context, out _fontSize))
+			{
+				LoadConfig();   // 老宿主/宿主配置不可用 ⇒ cfg 兜底
+			}
 			ReadFollowFontSetting(context);   // 是否跟随分类页字号
 			ReadDefaultCategorySetting(context);   // 默认显示的分类
 			ReadShowSwitches(context);   // ★ v2.13：两个显示开关
@@ -230,7 +243,8 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 			catch { }
 		try
 		{
-			LoadConfig();
+			// ★ v2.16.0：这里**不再 LoadConfig()** —— 它会在宿主配置之后把 _fontSize 覆盖回 cfg 的旧值
+			//   （正是「重进关卡变回配置页设置/默认值」的成因）。cfg 只在上面宿主配置读不到时兜底。
 			Log("初始化完成（v2 二级菜单）。数据来自《白卡植物标签表.xlsx》：5 大类、"
 				+ WhiteCardCategoriesTable.GroupOrder.Length + " 组、"
 				+ CountTags() + " 个标签、"
@@ -1415,12 +1429,39 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 				return;
 			}
 			_fontSize = size;
+			// ★ v2.16.0：**先写宿主配置**（这才是重进关卡/重建面板真正读的持久层），
+			//   cfg 只作旧版本兼容兜底。此前只写 cfg + 启动时被宿主值覆盖 ⇒ 必被还原。
+			TrySaveHostFontSize(size);
 			SaveConfig();
 			Log("按钮字号 -> " + size);
 			// 重建面板：所有按钮用新字号，尺寸/列数重算（BuildPanel 会沿用可见性）
 			RebuildDropdown(t);
 		}
-		catch { }
+		catch (Exception ex) { Log("设置字号失败（已吞）：" + ex.Message); }
+	}
+
+	/// <summary>
+	/// 把字号写进**宿主配置**（键 <c>defaultFontSize</c>，mod.json 里声明为 <c>enum</c>）。
+	///
+	/// ⚠️ enum 键的值**必须是 options 里的字符串**（"16"/"18"/…）；传 int 或 bool 会被宿主
+	///   <c>XWModSettingsService.TryValue</c> 拒绝 ⇒ **整批不落盘**且只回一句 Message。
+	/// ⚠️ 宿主 Save 有 `_saving` 重入锁：绝不能在 <c>Settings.Changed</c> 回调里调用。
+	/// </summary>
+	private bool TrySaveHostFontSize(int size)
+	{
+		try
+		{
+			if (_context?.Settings == null) { return false; }
+			var changes = new System.Collections.Generic.Dictionary<string, object>(1);
+			changes["defaultFontSize"] = size.ToString(System.Globalization.CultureInfo.InvariantCulture);
+			if (_context.Settings.TrySave(changes, out XWModSettingsSaveResult result))
+			{
+				return true;
+			}
+			Log("宿主配置保存字号失败（" + size + "）：" + (result == null ? "无消息" : result.Message));
+		}
+		catch (Exception ex) { Log("宿主配置保存字号异常（已吞）：" + ex.Message); }
+		return false;
 	}
 
 	/// <summary>第二级（某个大类）：该大类下的标签；首行「← 返回」回第一级。</summary>
