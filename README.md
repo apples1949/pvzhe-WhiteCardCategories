@@ -11,7 +11,7 @@
 | Mod ID | `whitecardcategories` |
 | 程序集 | `JTYWhiteCardCategories` → 包内 `Runtime/ModAssembly.dll` |
 | 入口类 | `WhiteCardCategoriesEntry` |
-| 当前版本 | 2.14.1 |
+| 当前版本 | 2.16.1 |
 | 分类 | 工具与前置 |
 
 ## 数据来源：《白卡植物标签表.xlsx》
@@ -298,6 +298,13 @@ private static readonly bool EnableLog = false;   // 置 true 重新构建即可
 
 ## 变更记录
 
+* **v2.16.1** —— 修「按获取章节里选完类别后，分类栏（面板）不消失」（玩家反馈）：
+  `OnChapterClicked` 此前只把该组植物写进 `pb.category` 再 `Choose`，**漏了收面板** ——
+  标签路径 `OnCategoryClicked` 和图鉴侧 `FilterAlmanacPage` 都会 `Dropdown.Visible = false`，
+  只有章节这条没写 ⇒ 卡池已经切换成功，面板却一直浮在卡池上，必须再点一次按钮才关得掉。
+  现在点任一章分组即收起，三条路径行为一致。
+* **v2.16.0** —— 字号按钮改动即写回宿主配置（`defaultFontSize`），配置优先 / cfg 兜底，不再被还原。
+* **v2.15.0** —— 适配 0.31.0：白卡 198 → 202 株（第10章 +10、杂交乐园 +4）。
 * **v2.14.1** —— 适配游戏 0.30.0：新增的第 10 章 10-11～10-20 共 10 株白卡（魔法睡莲 /
   寒冰海草 / 魔法大嘴花 / 洋流高坚果 / 精灵胆小菇 / 魔法海蘑菇 / 魔法大喷菇 / 魔法猫尾草 /
   巫师南瓜 / 魔法石坚果）并入「第10章」⇒ 章节分类 188 → **198 株**。章节表改为

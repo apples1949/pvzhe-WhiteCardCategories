@@ -1333,6 +1333,15 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	{
 		try
 		{
+			// ★ v2.16.1（玩家实测：章节分类选了对应类别后「分类栏」不消失）：
+			//   与 `OnCategoryClicked`（标签路径）和图鉴侧 `FilterAlmanacPage` 对齐 —— **选完立刻收面板**。
+			//   此前只有标签/图鉴两条路径收面板，「按获取章节」这条路径漏了 ⇒
+			//   卡池已经在背后切换成功，面板却一直浮在卡池上，必须再点一次按钮才能关掉。
+			//   ⚠️ 放在 try 的**第一句**：后面即便有语句抛异常，`catch {}` 也吞不掉"收面板"这个动作。
+			if (t != null && t.Dropdown != null && GodotObject.IsInstanceValid(t.Dropdown))
+			{
+				t.Dropdown.Visible = false;
+			}
 			string groupLabel = groupCode == ChapterFallbackCode
 				? "其他"
 				: WhiteCardChapterSources.LabelOf(groupCode);
