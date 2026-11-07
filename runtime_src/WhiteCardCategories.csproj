@@ -24,9 +24,9 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>2.17.1</Version>
+    <AssemblyVersion>2.17.1.0</AssemblyVersion>
+    <FileVersion>2.17.1.0</FileVersion>
     <!-- 压掉 MSB3277 版本冲突警告（否则构建日志膨胀、耗时变长） -->
     <NoWarn>$(NoWarn);MSB3277</NoWarn>
     <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>

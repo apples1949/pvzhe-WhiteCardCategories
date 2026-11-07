@@ -4,7 +4,7 @@
 //         ② 游戏解包数据，用于补齐 xlsx 之后新版本新增的白卡（按图鉴获取方式，
 //            缺失时回退 packet 的 levelSaveKey）。
 //
-// 分组来源（共 202 株）：
+// 分组来源（共 211 株）：
 //   A1     第1章       13 株
 //   A2     第2章       13 株
 //   A3     第3章       13 株
@@ -15,10 +15,11 @@
 //   A8     第8章       18 株
 //   A9     第9章       18 株
 //   A10    第10章      18 株
-//   HY     杂交乐园       7 株
-//   ON     在线关卡      42 株
+//   HY     杂交乐园      11 株
+//   ON     在线关卡      46 株
 //   SH     商店购买       1 株
 //   LT     抽奖盒子       1 株
+//   SPY    内鬼盒子无尽版    1 株
 //   BA     初始可用       1 株
 using System.Collections.Generic;
 
@@ -41,6 +42,7 @@ internal static class WhiteCardChapterSources
 		"ON|在线关卡|300",
 		"SH|商店购买|400",
 		"LT|抽奖盒子|500",
+		"SPY|内鬼盒子无尽版|585",
 		"BA|初始可用|600",
 	};
 
@@ -249,6 +251,15 @@ internal static class WhiteCardChapterSources
 		"PlantMagnetPot|HY",  // 磁力花盆
 		"PlantPotatoPumpkin|HY",  // 土豆壳
 		"PlantCoffeePot|HY",  // 咖啡花盆
+		"PlantMelonPumpkin|ON",  // 西瓜棚
+		"PlantIceSunFlower|ON",  // 寒冰向日葵
+		"PlantDoomPlantern|ON",  // 路灯毁灭菇
+		"PlantDoomSunFlower|ON",  // 毁灭向日葵
+		"PlantCoffeeKelp|HY",  // 海草咖啡豆
+		"PlantFrostShroom|HY",  // 霜冻大喷菇
+		"PlantSquashBomb|HY",  // 窝瓜炸弹
+		"PlantCabbageLeaf|HY",  // 叶子卷心菜投手
+		"PlantPresentNG|SPY",  // 内鬼盒子
 	};
 
 	private static Dictionary<string, string> _byKey;

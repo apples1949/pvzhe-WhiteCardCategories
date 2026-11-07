@@ -27,11 +27,18 @@ def strip_bb(s):
 
 
 def _blob():
-    import zstandard
+    """返回拆开后的整串文本（字段以 \\x00 分隔）。
+
+    0.31：messages 段是 zstd 压缩帧（文件首魔数 RSCC），需逐帧解压；
+    0.32：messages 段改为**明文存放**（文件首魔数 RSRC，整文件无 zstd 帧，
+          2026-11-07 实测 unpack/Asset/Translate/Translate.zh.translation 644659 B），
+          直接按 UTF-8 解即可，字段顺序仍是 [故事][中文名][简介][属性]。
+    """
     b = io.open(TRANS, "rb").read()
     start = b.find(b"\x28\xb5\x2f\xfd")          # 第一个 zstd 帧
     if start < 0:
-        raise SystemExit("没找到 zstd 帧：" + TRANS)
+        return b.decode("utf-8", errors="replace")
+    import zstandard
     out, off = [], start
     while off < len(b) - 4:
         obj = zstandard.ZstdDecompressor().decompressobj()
@@ -48,7 +55,15 @@ def _blob():
 
 
 def load():
-    """中文名 → {intro, detail, story}；detail 形如「获取方式：...\\n\\n韧性：300\\n...」。"""
+    """中文名 → {intro, detail, story}；detail 形如「获取方式：...\\n\\n韧性：300\\n...」。
+
+    字段排布（0.32 实测，202 条图鉴逐条核对）：[名字][简介][属性块][故事]。
+      · 简介 = 名字后第 1 位，属性块 = 名字后第 2 位（含「获取方式」/「韧性」），
+        故事 = 名字后第 3 位。
+      · 旧版本模块误用「名字前一位」(fields[i-1]) 当故事 —— 那是**上一株植物**的故事，
+        导致 0.31 那轮补的 14 行图鉴故事整体错位（已核对：202 行里 185 行命中 i+3、
+        14 行命中 i-1，其余 3 行是 0.32 改写过的故事）。此处改为 i+3。
+    """
     fields = _blob().split("\x00")
     idx = {}
     for i, f in enumerate(fields):
@@ -58,11 +73,15 @@ def load():
         if i + 2 < len(fields):
             nxt, nxt2 = fields[i + 1], fields[i + 2]
             if nxt and nxt2 and ("获取方式" in nxt2 or "韧性" in nxt2):
+                story = strip_bb(fields[i + 3]) if i + 3 < len(fields) else ""
+                # 安全阀：故事不该是空的，也不该又是「获取方式/韧性」属性块
+                if not story or "获取方式" in story or story.startswith("韧性："):
+                    story = ""
                 if f not in idx:
                     idx[f] = {
                         "intro": strip_bb(nxt),
                         "detail": strip_bb(nxt2),
-                        "story": strip_bb(fields[i - 1]) if i > 0 else "",
+                        "story": story,
                     }
     return idx
 

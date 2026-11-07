@@ -91,8 +91,13 @@ def load_universe():
         parts = raw[m.end():].split("\x00")
         if len(parts) < 2:
             return ""
-        a = re.search(r"获取方式\[/color\]：\[color=[0-9a-fA-F]+\]([^\[]+)\[/color\]", parts[1])
-        return a.group(1).strip() if a else ""
+        # 0.32 起 messages 段是明文，字段序 [名字][简介][属性块][故事] ⇒ 属性块在 parts[2]；
+        # 这里兼容扫前 4 段（0.31 是 zstd 压缩，raw 解出来是乱码，此路本来就走不到，回退 levelSaveKey）。
+        for seg in parts[1:5]:
+            a = re.search(r"获取方式\[/color\]：\[color=[0-9a-fA-F]+\]([^\[]+)\[/color\]", seg)
+            if a:
+                return a.group(1).strip()
+        return ""
 
     # 2.4 packet .tres：中文名 + levelSaveKey
     meta = {}
@@ -146,6 +151,7 @@ GROUPS = OrderedDict([
     ("CHAL", ("挑战模式", 560)),
     ("IZM", ("我是僵尸", 570)),
     ("VS",  ("对战模式", 580)),
+    ("SPY", ("内鬼盒子无尽版", 585)),          # ← 0.32 新增：内鬼盒子的获取方式为「通关内鬼盒子无尽版10回合」
     ("EVENT", ("限时活动", 590)),
     ("BA",  ("初始可用", 600)),
 ])
@@ -161,6 +167,8 @@ def classify(text):
         return "A%d" % ch if 1 <= ch <= 10 else "BA"
     if "杂交乐园" in text:
         return "HY"
+    if "内鬼盒子" in text:
+        return "SPY"
     if text.startswith("在线关卡奖励"):
         return "ON"
     if text.startswith("商店购买"):

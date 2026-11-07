@@ -1737,6 +1737,82 @@
     "花盆",
     "咖啡豆"
    ]
+  },
+  "PlantMelonPumpkin": {
+   "name": "西瓜棚",
+   "tags": [
+    "投抛",
+    "发射",
+    "坚果",
+    "南瓜壳",
+    "西瓜"
+   ]
+  },
+  "PlantIceSunFlower": {
+   "name": "寒冰向日葵",
+   "tags": [
+    "产阳光",
+    "寒冰",
+    "向日葵",
+    "冰"
+   ]
+  },
+  "PlantDoomPlantern": {
+   "name": "路灯毁灭菇",
+   "tags": [
+    "一次性",
+    "灯具",
+    "毁灭",
+    "夜行"
+   ]
+  },
+  "PlantDoomSunFlower": {
+   "name": "毁灭向日葵",
+   "tags": [
+    "一次性",
+    "产阳光",
+    "毁灭",
+    "向日葵",
+    "夜行"
+   ]
+  },
+  "PlantCoffeeKelp": {
+   "name": "海草咖啡豆",
+   "tags": [
+    "缠绕",
+    "咖啡豆"
+   ]
+  },
+  "PlantFrostShroom": {
+   "name": "霜冻大喷菇",
+   "tags": [
+    "近战",
+    "喷菇",
+    "冰",
+    "夜行"
+   ]
+  },
+  "PlantSquashBomb": {
+   "name": "窝瓜炸弹",
+   "tags": [
+    "一次性",
+    "窝瓜"
+   ]
+  },
+  "PlantCabbageLeaf": {
+   "name": "叶子卷心菜投手",
+   "tags": [
+    "投抛",
+    "击退",
+    "保护伞"
+   ]
+  },
+  "PlantPresentNG": {
+   "name": "内鬼盒子",
+   "tags": [
+    "一次性",
+    "模仿者"
+   ]
   }
  }
 }
