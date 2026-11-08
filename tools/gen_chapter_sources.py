@@ -2,14 +2,18 @@
 """生成 WhiteCardChapterSources.cs：白卡 → 章节（来源分组）映射。
 
 数据源（两路合并）：
-  1) **xlsx** `白卡植物标签表.xlsx` 的「图鉴说明」列「获取方式」文本 —— 202 株，权威。
+  1) **xlsx** `白卡植物标签表.xlsx` 的「图鉴说明」列「获取方式」文本 —— 211 株（0.32.0），权威。
   2) **游戏解包** `unpack/` —— 用于补齐 xlsx 之后新版本新增的白卡：
      - 白卡名单：`Asset/Config/PacketBank/PacketBankResource.json` → GeneralPlant.Category.White
      - 章节依据：优先用 `Translate.zh.translation` 图鉴条目的「获取方式」文本（与 xlsx 同口径），
                  缺失时回退到 packet .tres 的 `levelSaveKey`
      - 中文名：`Asset/Translate/Translate.csv`
 
-用法：python _gen_chapter_sources.py
+2.18.0 归类调整（用户要求，见 GROUPS/classify 注释）：
+  · 原「抽奖盒子」+「内鬼盒子无尽版」⇒ 合并为 **无尽获取**（ENDLESS）
+  · 原「初始可用」⇒ 并入 **第1章**（A1），该分组取消
+
+用法：python tools/gen_chapter_sources.py
 """
 import io, os, re, json, sys
 from collections import OrderedDict
@@ -132,6 +136,11 @@ def load_universe():
 
 
 # ── 3. 组定义 ──
+# 2.18.0 两处归类调整（用户要求）：
+#   ① 原「抽奖盒子」(LT) 与「内鬼盒子无尽版」(SPY) 合并为「无尽获取」(ENDLESS) —— 两者获取方式都是
+#      「通关<盒子名>无尽版10回合」，归一为一个分组，不再出现两处重复归类；
+#   ② 原「初始可用」(BA) 整组并入「第1章」(A1) —— 图鉴没有「获取方式」字段的白卡视为初始即有，
+#      按用户要求归到第 1 章，不再单独成组。
 GROUPS = OrderedDict([
     ("A1",  ("第1章", 10)),
     ("A2",  ("第2章", 20)),
@@ -146,35 +155,31 @@ GROUPS = OrderedDict([
     ("HY",  ("杂交乐园", 200)),
     ("ON",  ("在线关卡", 300)),
     ("SH",  ("商店购买", 400)),
-    ("LT",  ("抽奖盒子", 500)),
+    ("ENDLESS", ("无尽获取", 500)),        # ← 2.18.0：原「抽奖盒子」+「内鬼盒子无尽版」合并
     ("MINI", ("迷你游戏", 550)),
     ("CHAL", ("挑战模式", 560)),
     ("IZM", ("我是僵尸", 570)),
     ("VS",  ("对战模式", 580)),
-    ("SPY", ("内鬼盒子无尽版", 585)),          # ← 0.32 新增：内鬼盒子的获取方式为「通关内鬼盒子无尽版10回合」
     ("EVENT", ("限时活动", 590)),
-    ("BA",  ("初始可用", 600)),
 ])
 
 
 def classify(text):
-    """获取方式文本 → 组编码"""
+    """获取方式文本 → 组编码（2.18.0：无尽类合并为 ENDLESS；无获取方式归 A1）"""
     if not text:
-        return "BA"
+        return "A1"                      # 原「初始可用」⇒ 并入第 1 章
     m = re.match(r"通关冒险模式\s*(\d+)\s*[-－]\s*(\d+)", text)
     if m:
         ch = int(m.group(1))
-        return "A%d" % ch if 1 <= ch <= 10 else "BA"
+        return "A%d" % ch if 1 <= ch <= 10 else "A1"
     if "杂交乐园" in text:
         return "HY"
-    if "内鬼盒子" in text:
-        return "SPY"
+    if "内鬼盒子" in text or "抽奖盒子" in text:
+        return "ENDLESS"                 # 两个「XX无尽版10回合」抽盒子 ⇒ 无尽获取
     if text.startswith("在线关卡奖励"):
         return "ON"
     if text.startswith("商店购买"):
         return "SH"
-    if "抽奖盒子" in text:
-        return "LT"
     if "迷你游戏" in text or "砸罐子" in text or "幸运四叶草" in text or "坚果保龄球" in text:
         return "MINI"
     if "挑战模式" in text:
@@ -185,7 +190,7 @@ def classify(text):
         return "VS"
     if "每日挑战" in text or "活动" in text:
         return "EVENT"
-    return "BA"
+    return "A1"                          # 兜底同样并入第 1 章
 
 
 def classify_tres(level_key):
@@ -210,7 +215,9 @@ for key in order:                       # ① xlsx 权威部分（顺序 = 表�
     g = classify(text)
     rows.append((key, g, name, text))
     counts[g] += 1
-    if g == "BA" and text and not text.startswith("通关冒险模式"):
+    # 2.18.0：原来落「初始可用」(BA) 的现在落第 1 章，所以「需人工确认」的条件改成
+    # 「有获取方式文本、但不是冒险通关、却仍被判进第 1 章」——正常应为空。
+    if g == "A1" and text and not text.startswith("通关冒险模式"):
         unknown.append((key, name, text))
 
 # ② 解包补齐：游戏里有、xlsx 里没有的白卡
@@ -220,10 +227,10 @@ for k, (cn, text, lv) in load_universe().items():
         continue
     g = classify(text) or classify_tres(lv)
     if not g:
-        g = "BA"
+        g = "A1"
     extra.append((k, g, cn, text or lv))
     counts[g] += 1
-    if g == "BA" and text:
+    if g == "A1" and text and not text.startswith("通关冒险模式"):
         unknown.append((k, cn, text))
 
 extra.sort(key=lambda r: (GROUPS[r[1]][1], r[0]))
@@ -240,7 +247,7 @@ for g, (label, w) in GROUPS.items():
         print("  %-5s %-8s %3d" % (g, label, counts[g]))
 print("  合计 %d 株" % sum(counts.values()))
 if unknown:
-    print("\n落 BA 且原文不是冒险通关的（需人工确认）：")
+    print("\n落第1章、但原文不是冒险通关的（需人工确认）：")
     for x in unknown:
         print("   ", x)
 

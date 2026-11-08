@@ -634,8 +634,10 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 	}
 
 	// ★ v2.14：注入「按获取章节」分组（WCC_Chapter_<组码> → 该组白卡列表）
-	//   数据源从 .tres 的 levelSaveKey 换成 xlsx「图鉴说明」的「获取方式」文本，
-	//   覆盖 通关冒险模式 X-Y / 在线关卡水晶兑换 / 商店购买 / 杂交乐园 / 抽奖盒子 / 初始可用。
+	//   数据源从 .tres 的 levelSaveKey 换成 xlsx「图鉴说明」的「获取方式」文本，覆盖
+	//   通关冒险模式 X-Y（第1章另含图鉴无获取方式的初始白卡）/ 在线关卡水晶兑换 / 商店购买 /
+	//   杂交乐园 / 无尽获取（v2.18.0 起：原「抽奖盒子」+「内鬼盒子无尽版」合并）。
+	//   分组清单与显示名全部来自 WhiteCardChapterSources.ChapterGroupLines（本文件不硬编码组名）。
 	EnsureBaked();
 	var chapterBuckets = new Dictionary<string, Godot.Collections.Array>();
 	foreach (string k in whiteSet)
@@ -1276,8 +1278,8 @@ public sealed class WhiteCardCategoriesEntry : IXWModRuntimeEntry
 
 
 	/// <summary>★ v2.14：「按获取章节」二级页——按【获取方式】分组（xlsx 图鉴说明），点分组筛该组白卡。
-	/// 分组清单由 <see cref="WhiteCardChapterSources.ChapterGroupLines"/> 决定（15 组，202 株全覆盖，
-	/// 不再有「其他」兜底）。</summary>
+	/// 分组清单由 <see cref="WhiteCardChapterSources.ChapterGroupLines"/> 决定（v2.18.0 起 14 组、211 株全覆盖，
+	/// 不再有「其他」兜底；旧组「抽奖盒子」「内鬼盒子无尽版」已并入「无尽获取」，「初始可用」已并入「第1章」）。</summary>
 	private void ShowLevelSourcePage(Target t)
 	{
 		try

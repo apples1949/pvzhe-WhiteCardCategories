@@ -45,37 +45,37 @@ BAK_ROOT = os.path.join(ROOT, "白卡植物标签表.bak-0.32前.xlsx")
 BAK_DATA = os.path.join(MOD, "data", "白卡植物标签表.bak-0.32前.xlsx")
 
 # ── 章节分组（与 gen_chapter_sources.py / WhiteCardChapterSources.cs 同口径）──
+# 2.18.0（用户要求）：①原「抽奖盒子」+「内鬼盒子无尽版」⇒ 合并为「无尽获取」；
+#                    ②原「初始可用」⇒ 并入「第1章」，该分组取消。
 GROUPS = [
     ("A1", "第1章", 10), ("A2", "第2章", 20), ("A3", "第3章", 30), ("A4", "第4章", 40),
     ("A5", "第5章", 50), ("A6", "第6章", 60), ("A7", "第7章", 70), ("A8", "第8章", 80),
     ("A9", "第9章", 90), ("A10", "第10章", 100),
     ("HY", "杂交乐园", 200), ("ON", "在线关卡", 300), ("SH", "商店购买", 400),
-    ("LT", "抽奖盒子", 500), ("MINI", "迷你游戏", 550), ("CHAL", "挑战模式", 560),
-    ("IZM", "我是僵尸", 570), ("VS", "对战模式", 580),
-    ("SPY", "内鬼盒子无尽版", 585),            # ← 0.32 新增模式
-    ("EVENT", "限时活动", 590), ("BA", "初始可用", 600),
+    ("ENDLESS", "无尽获取", 500),
+    ("MINI", "迷你游戏", 550), ("CHAL", "挑战模式", 560),
+    ("IZM", "我是僵尸", 570), ("VS", "对战模式", 580), ("EVENT", "限时活动", 590),
 ]
 GROUP_LABEL = {g: l for g, l, _ in GROUPS}
 GROUP_WEIGHT = {g: w for g, _, w in GROUPS}
 
 
 def classify(text):
+    """获取方式文本 → 组编码（2.18.0：无尽类合并；无获取方式并入第1章）"""
     if not text:
-        return "BA"
+        return "A1"
     m = re.match(r"通关冒险模式\s*(\d+)\s*[-－]\s*(\d+)", text)
     if m:
         ch = int(m.group(1))
-        return "A%d" % ch if 1 <= ch <= 10 else "BA"
+        return "A%d" % ch if 1 <= ch <= 10 else "A1"
     if "杂交乐园" in text:
         return "HY"
-    if "内鬼盒子" in text:
-        return "SPY"
+    if "内鬼盒子" in text or "抽奖盒子" in text:
+        return "ENDLESS"
     if text.startswith("在线关卡奖励"):
         return "ON"
     if text.startswith("商店购买"):
         return "SH"
-    if "抽奖盒子" in text:
-        return "LT"
     if "迷你游戏" in text or "砸罐子" in text or "幸运四叶草" in text or "坚果保龄球" in text:
         return "MINI"
     if "挑战模式" in text:
@@ -86,7 +86,7 @@ def classify(text):
         return "VS"
     if "每日挑战" in text or "活动" in text:
         return "EVENT"
-    return "BA"
+    return "A1"
 
 
 # ── 0.32 新增 9 株：攻击/弹道 + 标签 + 源码依据（逐株核定，见各条注释）──
@@ -169,6 +169,19 @@ USER_PATCHES = {
         desc="用户指定：内鬼盒子+模仿者（0.32，图鉴无「模仿」字样，行为为随机礼盒）",
     ),
 }
+
+
+# ── 2.18.0 章节归类调整台账（用户要求；用于「数据说明」逐条留痕 + 生成后断言校验）──
+# (植物键, 中文名, 原分组, 该组原株数, 新分组, 依据)
+CHAPTER_MOVES_2180 = [
+    ("PlantPresentBox", "抽奖盒子", "抽奖盒子", 1, "无尽获取",
+     "图鉴「获取方式：通关抽奖盒子无尽版10回合」——与内鬼盒子同属「<盒子名>无尽版10回合」，"
+     "两者合并为「无尽获取」，不再各占一个分组"),
+    ("PlantPresentNG", "内鬼盒子", "内鬼盒子无尽版", 1, "无尽获取",
+     "图鉴「获取方式：通关内鬼盒子无尽版10回合」——并入「无尽获取」；旧分组名「内鬼盒子无尽版」作废"),
+    ("PlantSunflowerPea", "豌豆向日葵", "初始可用", 1, "第1章",
+     "图鉴无「获取方式」字段（初始即可用）——按用户要求整组并入第 1 章，旧分组名「初始可用」作废"),
+]
 
 
 def style_like(ws, src_row, dst_row, ncols):
@@ -591,9 +604,11 @@ def main():
     upsert("0.32 新增白卡",
            "共 %d 株（按标签字典口径逐株打标签，每条都写了源码/图鉴依据）：%s"
            % (len(NEW_ROWS), "、".join(NEW_ROWS[k]["cn"] for k in NEW_ROWS)))
-    upsert("按章节分类", "按「图鉴说明」的「获取方式」分组：冒险第1~10章 / 杂交乐园 / 在线关卡 / 商店购买 / "
-                         "抽奖盒子 / 迷你游戏 / 挑战模式 / 我是僵尸 / 对战模式 / 内鬼盒子无尽版 / 限时活动 / 初始可用"
-                         "（「内鬼盒子无尽版」为 0.32 新增分组：内鬼盒子的获取方式＝通关内鬼盒子无尽版 10 回合）")
+    upsert("按章节分类", "按「图鉴说明」的「获取方式」分组（2.18.0 口径，14 个组）：冒险第1~10章"
+                         "（第1章含原「初始可用」）/ 杂交乐园 / 在线关卡 / 商店购买 / "
+                         "无尽获取（原「抽奖盒子」+「内鬼盒子无尽版」合并）/ 迷你游戏 / 挑战模式 / "
+                         "我是僵尸 / 对战模式 / 限时活动。空组不显示。"
+                         "⚠ 旧分组名「抽奖盒子」「内鬼盒子无尽版」「初始可用」已取消，见「2.18.0 章节调整」")
     upsert("文案抽取", "Translate.zh.translation（Godot OptimizedTranslation）：0.32 起 messages 段改为明文存放"
                        "（文件首魔数 RSRC、整文件查不到 zstd 帧），按 \\x00 字段边界切块，字段序为 "
                        "[名字][简介][属性块][故事]；0.31 为 RSCC + 逐帧 zstd 压缩，需先解压再切块")
@@ -659,6 +674,37 @@ def main():
     upsert("标签数", "使用中的标签 %d 个（「标签字典」共 %d 条定义，其中 %d 条白卡暂无命中）；"
                      "本轮未新增标签，只给 7 个已有标签补了 0.32 判定说明"
            % (len(tag_cnt), wd0.max_row - 1, (wd0.max_row - 1) - len(tag_cnt)))
+
+    # ── 6b) 2.18.0 章节归类调整留痕（用户要求：写清哪些株从哪组挪到哪组、为什么）──
+    cur_group = {}
+    for v in out_rows:
+        cur_group[str(v[4]).strip()] = v[0]                 # 植物键 → 新分组名
+    moved_ok = []
+    for (mk, mcn, mfrom, mn_from, mto, mwhy) in CHAPTER_MOVES_2180:
+        now = cur_group.get(mk)
+        if now != mto:
+            print("!! 2.18.0 台账与结果不符：%s 期望 %s，实际 %s" % (mk, mto, now))
+            continue
+        moved_ok.append((mk, mcn, mfrom, mn_from, mto, mwhy))
+    if moved_ok:
+        upsert("2.18.0 更新", "mod 2.18.0（数据仍为 0.32.0，标签/白卡数据零变化）：只调「按获取章节」的归类 —— "
+                             "分组 16 → 14，三张表（xlsx「按章节分类」、WhiteCardChapterSources.cs、"
+                             "mod.json/README 说明文案）同步；详见「2.18.0 章节调整」与「2.18.0 挪动-*」")
+        upsert("2.18.0 章节调整",
+               "①原「抽奖盒子」%d 株 + 原「内鬼盒子无尽版」%d 株 ⇒ 合并为「无尽获取」（共 %d 株）："
+               "两者获取方式都是「通关<盒子名>无尽版10回合」，归一后不再出现两处重复归类；"
+               "②原「初始可用」%d 株（%s）⇒ 并入「第1章」（该组 13 → 14 株）：图鉴无「获取方式」字段即视为"
+               "初始即有，按用户要求归到第 1 章。总株数不变 %d 株，分组名由 16 个减为 14 个，"
+               "旧组名「抽奖盒子」「内鬼盒子无尽版」「初始可用」全部作废"
+               % (sum(1 for x in moved_ok if x[2] == "抽奖盒子"),
+                  sum(1 for x in moved_ok if x[2] == "内鬼盒子无尽版"),
+                  sum(1 for x in moved_ok if x[4] == "无尽获取"),
+                  sum(1 for x in moved_ok if x[2] == "初始可用"),
+                  "、".join(x[1] for x in moved_ok if x[2] == "初始可用"),
+                  len(out_rows)))
+        for i, (mk, mcn, mfrom, mn_from, mto, mwhy) in enumerate(moved_ok, start=1):
+            upsert("2.18.0 挪动-%d %s（%s）" % (i, mcn, mk),
+                   "「%s」（原 %d 株）→「%s」 ｜ 依据：%s" % (mfrom, mn_from, mto, mwhy))
 
     print("\n表格统计：白卡 %d 株；标签筛选 %d 行；图鉴说明 %d 行；按章节分类 %d 行；标签 %d 个"
           % (ws.max_row - 1, wf.max_row - 1, wt.max_row - 1, wc.max_row - 1, len(tag_cnt)))

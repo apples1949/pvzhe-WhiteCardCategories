@@ -5,7 +5,7 @@
 //            缺失时回退 packet 的 levelSaveKey）。
 //
 // 分组来源（共 211 株）：
-//   A1     第1章       13 株
+//   A1     第1章       14 株
 //   A2     第2章       13 株
 //   A3     第3章       13 株
 //   A4     第4章       13 株
@@ -18,9 +18,7 @@
 //   HY     杂交乐园      11 株
 //   ON     在线关卡      46 株
 //   SH     商店购买       1 株
-//   LT     抽奖盒子       1 株
-//   SPY    内鬼盒子无尽版    1 株
-//   BA     初始可用       1 株
+//   ENDLESS 无尽获取       2 株
 using System.Collections.Generic;
 
 internal static class WhiteCardChapterSources
@@ -41,15 +39,13 @@ internal static class WhiteCardChapterSources
 		"HY|杂交乐园|200",
 		"ON|在线关卡|300",
 		"SH|商店购买|400",
-		"LT|抽奖盒子|500",
-		"SPY|内鬼盒子无尽版|585",
-		"BA|初始可用|600",
+		"ENDLESS|无尽获取|500",
 	};
 
 	/// <summary>植物键 → 章节编码。编码 "键|组"。每株白卡植物恰好一条。</summary>
 	internal static readonly string[] PlantChapterLines =
 	{
-		"PlantSunflowerPea|BA",  // 豌豆向日葵
+		"PlantSunflowerPea|A1",  // 豌豆向日葵
 		"PlantFirenut|A1",  // 火炬坚果
 		"PlantSunBomb|A1",  // 阳光炸弹
 		"PlantSunMine|A1",  // 阳光土豆雷
@@ -236,7 +232,7 @@ internal static class WhiteCardChapterSources
 		"PlantHypnoPot|HY",  // 魅惑花盆
 		"PlantSealeaf|HY",  // 海叶伞
 		"PlantGarlicWood|HY",  // 大蒜火炬树桩
-		"PlantPresentBox|LT",  // 抽奖盒子
+		"PlantPresentBox|ENDLESS",  // 抽奖盒子
 		"PlantLilyPadMagic|A10",  // 魔法睡莲
 		"PlantIceKelp|A10",  // 寒冰海草
 		"PlantChomperMagic|A10",  // 魔法大嘴花
@@ -259,7 +255,7 @@ internal static class WhiteCardChapterSources
 		"PlantFrostShroom|HY",  // 霜冻大喷菇
 		"PlantSquashBomb|HY",  // 窝瓜炸弹
 		"PlantCabbageLeaf|HY",  // 叶子卷心菜投手
-		"PlantPresentNG|SPY",  // 内鬼盒子
+		"PlantPresentNG|ENDLESS",  // 内鬼盒子
 	};
 
 	private static Dictionary<string, string> _byKey;
