@@ -1813,6 +1813,46 @@
     "一次性",
     "模仿者"
    ]
+  },
+  "PlantWildPuffShroom": {
+   "name": "狂野小喷菇",
+   "tags": [
+    "射击",
+    "小喷菇",
+    "喷菇",
+    "夜行"
+   ]
+  },
+  "PlantWildFumeShroom": {
+   "name": "狂野大喷菇",
+   "tags": [
+    "近战",
+    "喷菇",
+    "夜行"
+   ]
+  },
+  "PlantHypnoMagnet": {
+   "name": "磁力魅惑菇",
+   "tags": [
+    "磁力",
+    "魅惑",
+    "夜行"
+   ]
+  },
+  "PlantCornNut": {
+   "name": "玉米坚果",
+   "tags": [
+    "发射",
+    "坚果",
+    "玉米"
+   ]
+  },
+  "PlantCherryPlantern": {
+   "name": "樱桃路灯花",
+   "tags": [
+    "灯具",
+    "樱桃"
+   ]
   }
  }
 }

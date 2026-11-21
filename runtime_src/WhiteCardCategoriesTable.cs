@@ -3,7 +3,7 @@
 // 数据来源：表格「标签字典」的分组列 + 「白卡植物标签」的标签列。
 //   5 大类 = 攻击 / 生产 / 职能 / 系列 / 属性
 //   （字典里的「备注/脚本特化」命中 0，表格说明已并入「其他」，故不设该大类）
-// 覆盖表格全部 211 株白卡植物、71 个标签。
+// 覆盖表格全部 216 株白卡植物、71 个标签。
 //
 // ⚠️ 本表是「构建期烘焙」。游戏更新/Mod 新增的白卡不在表里 ⇒ Entry 会用
 //    `WhiteCardAutoTagger`（配置字段 + 名称关键词 + 组件集）再兜一轮，
@@ -242,5 +242,10 @@ internal static class WhiteCardCategoriesTable
 		"PlantSquashBomb|一次性,窝瓜",
 		"PlantCabbageLeaf|投抛,击退,保护伞",
 		"PlantPresentNG|一次性,模仿者",
+		"PlantWildPuffShroom|射击,小喷菇,喷菇,夜行",
+		"PlantWildFumeShroom|近战,喷菇,夜行",
+		"PlantHypnoMagnet|磁力,魅惑,夜行",
+		"PlantCornNut|发射,坚果,玉米",
+		"PlantCherryPlantern|灯具,樱桃",
 	};
 }
